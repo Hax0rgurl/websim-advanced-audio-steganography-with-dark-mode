@@ -422,6 +422,29 @@
         </div>
       </div>
 
+      <!-- Edit Modal -->
+      <div class="modal" id="editModal" aria-hidden="true" role="dialog" aria-label="Edit Post">
+        <div class="modal-content" style="max-width: 500px;">
+          <div class="modal-header">
+            <div class="modal-title">Edit Details</div>
+            <button class="modal-close" id="editCloseBtn" type="button">Close</button>
+          </div>
+          <div class="modal-body">
+            <div class="player-layout">
+              <div class="player-panel">
+                <div class="label">Update Info</div>
+                <input type="text" id="editTitle" placeholder="Title" style="width:100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--glass-bg); color: var(--text-color);">
+                <input type="text" id="editArtist" placeholder="Artist" style="width:100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--glass-bg); color: var(--text-color);">
+                
+                <div class="inline-controls" style="margin-top: 16px; justify-content: flex-end;">
+                  <button id="editSaveBtn" type="button">Save Changes</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Overlay Modal Removed (integrated into wizard) -->
     </div>
 

@@ -16,9 +16,27 @@ export class Gallery {
       this.filterContainer.id = 'galleryFilters';
       this.grid.parentElement.insertBefore(this.filterContainer, this.grid);
     }
+
+    // Edit Modal Elements
+    this.editModal = document.getElementById('editModal');
+    this.editTitleInput = document.getElementById('editTitle');
+    this.editArtistInput = document.getElementById('editArtist');
+    this.editSaveBtn = document.getElementById('editSaveBtn');
+    this.editCloseBtn = document.getElementById('editCloseBtn');
+    this.currentEditId = null;
+
+    if (this.editModal) {
+      this.editCloseBtn.onclick = () => this.closeEditModal();
+      this.editSaveBtn.onclick = () => this.saveEdit();
+      // Click outside to close
+      this.editModal.onclick = (e) => { if (e.target === this.editModal) this.closeEditModal(); };
+    }
   }
 
   async init() {
+    this.currentUser = await window.websim.getCurrentUser();
+    this.creator = await window.websim.getCreatedBy();
+
     // Subscribe to latest posts (newest first usually)
     // WebsimSocket.collection.getList returns records.
     this.unsubscribe = this.room.collection('stego_post').subscribe((records) => {
@@ -122,7 +140,6 @@ export class Gallery {
       // Visual Badge Logic
       const payloadType = post.payload_type || '';
       let badgeHtml = '';
-      // We keep the badge on the image for quick scanning, but detail is below now too.
       if (payloadType.startsWith('video/')) {
         badgeHtml = `<div class="gallery-type-badge">🎬 Video</div>`;
       } else if (payloadType.startsWith('audio/')) {
@@ -156,12 +173,27 @@ export class Gallery {
         </div>`;
       }
 
+      // Check permissions
+      const isOwner = this.currentUser && post.username === this.currentUser.username;
+      const isAdmin = this.creator && this.currentUser && this.creator.username === this.currentUser.username;
+      let controlsHtml = '';
+      if (isOwner || isAdmin) {
+        controlsHtml = `
+          <div class="gallery-controls">
+            ${isOwner ? `<button class="gallery-btn-edit" title="Edit Info">✏️</button>` : ''}
+            <button class="gallery-btn-delete" title="Delete Post">🗑️</button>
+          </div>
+        `;
+      }
+
       card.innerHTML = `
         ${previewHtml}
         ${badgeHtml}
         <div class="gallery-play-icon"></div>
       `;
       
+      const artistDisplay = post.artist ? `${post.artist} <span style="opacity:0.6;font-size:10px;">(@${post.username})</span>` : post.username || 'Anonymous';
+
       const details = document.createElement('div');
       details.className = 'gallery-details';
       details.innerHTML = `
@@ -171,7 +203,7 @@ export class Gallery {
         <div class="gallery-meta-row">
            <div class="gallery-artist">
               ${avatar ? `<img src="${avatar}" class="gallery-avatar" alt="">` : '<div class="gallery-avatar-placeholder"></div>'}
-              <span>${post.artist || post.username || 'Anonymous'}</span>
+              <span>${artistDisplay}</span>
            </div>
         </div>
         <div class="gallery-types">
@@ -179,6 +211,7 @@ export class Gallery {
            <span class="type-arrow">→</span>
            <span class="type-tag highlight">${inType}</span>
         </div>
+        ${controlsHtml}
       `;
 
       cardWrap.appendChild(card);
@@ -198,9 +231,67 @@ export class Gallery {
         });
       }
 
-      cardWrap.onclick = () => this.onPlay(post);
+      // Interaction Logic
+      const editBtn = details.querySelector('.gallery-btn-edit');
+      const delBtn = details.querySelector('.gallery-btn-delete');
+
+      if (editBtn) {
+        editBtn.onclick = (e) => {
+          e.stopPropagation();
+          this.openEditModal(post);
+        };
+      }
+      if (delBtn) {
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          if (confirm('Are you sure you want to delete this file?')) {
+            this.room.collection('stego_post').delete(post.id);
+          }
+        };
+      }
+
+      cardWrap.onclick = (e) => {
+        // Don't open if clicked on controls
+        if (e.target.closest('.gallery-controls')) return;
+        this.onPlay(post);
+      };
+      
       this.grid.appendChild(cardWrap);
     });
+  }
+
+  openEditModal(post) {
+    this.currentEditId = post.id;
+    this.editTitleInput.value = post.title || '';
+    this.editArtistInput.value = post.artist || '';
+    this.editModal.classList.add('open');
+    this.editModal.setAttribute('aria-hidden', 'false');
+  }
+
+  closeEditModal() {
+    this.editModal.classList.remove('open');
+    this.editModal.setAttribute('aria-hidden', 'true');
+    this.currentEditId = null;
+  }
+
+  async saveEdit() {
+    if (!this.currentEditId) return;
+    const title = this.editTitleInput.value;
+    const artist = this.editArtistInput.value;
+    
+    this.editSaveBtn.disabled = true;
+    this.editSaveBtn.textContent = 'Saving...';
+    try {
+      await this.room.collection('stego_post').update(this.currentEditId, {
+        title, artist
+      });
+      this.closeEditModal();
+    } catch(e) {
+      alert('Error updating: ' + e.message);
+    } finally {
+      this.editSaveBtn.disabled = false;
+      this.editSaveBtn.textContent = 'Save Changes';
+    }
   }
 
   async uploadPost(blob, title, artist, payloadType) {
