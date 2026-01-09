@@ -5,6 +5,17 @@ export class Gallery {
     this.onPlay = onPlayCallback;
     this.posts = [];
     this.unsubscribe = null;
+    this.activeFilter = 'all';
+    
+    // Create filter UI container
+    this.filterContainer = document.getElementById('galleryFilters');
+    if (!this.filterContainer) {
+      // Fallback if not found in HTML (auto-create)
+      this.filterContainer = document.createElement('div');
+      this.filterContainer.className = 'gallery-filters';
+      this.filterContainer.id = 'galleryFilters';
+      this.grid.parentElement.insertBefore(this.filterContainer, this.grid);
+    }
   }
 
   async init() {
@@ -13,32 +24,105 @@ export class Gallery {
     this.unsubscribe = this.room.collection('stego_post').subscribe((records) => {
       // sort by created_at desc if not already
       this.posts = records.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+      this.renderFilters();
       this.render();
+    });
+  }
+
+  getSimleType(mime) {
+    if (!mime) return 'File';
+    if (mime.startsWith('image/')) return 'Image';
+    if (mime.startsWith('audio/')) return 'Audio';
+    if (mime.startsWith('video/')) return 'Video';
+    if (mime.startsWith('text/')) return 'Text';
+    return 'File';
+  }
+
+  renderFilters() {
+    const counts = { 'all': 0 };
+    
+    // Calculate counts for dynamic filters
+    this.posts.forEach(p => {
+      counts.all++;
+      const outType = this.getSimleType(p.mime_type);
+      const inType = this.getSimleType(p.payload_type);
+      const key = `${outType} → ${inType}`;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+
+    const filters = [
+      { id: 'all', label: 'All Files' },
+      { id: 'Image → Audio', label: 'Image → Audio' },
+      { id: 'Image → Video', label: 'Image → Video' },
+      { id: 'Video → Audio', label: 'Video → Audio' },
+      { id: 'Audio → Audio', label: 'Audio → Audio' }
+    ];
+
+    // Add any other existing combos that aren't standard
+    Object.keys(counts).forEach(k => {
+      if (k !== 'all' && !filters.find(f => f.id === k)) {
+        if (counts[k] > 0) filters.push({ id: k, label: k });
+      }
+    });
+
+    let html = '';
+    filters.forEach(f => {
+      if (counts[f.id] > 0 || f.id === 'all') {
+        const active = this.activeFilter === f.id ? 'active' : '';
+        html += `<button class="filter-pill ${active}" data-filter="${f.id}">${f.label} <span class="count">${counts[f.id] || 0}</span></button>`;
+      }
+    });
+
+    this.filterContainer.innerHTML = html;
+    
+    this.filterContainer.querySelectorAll('.filter-pill').forEach(btn => {
+      btn.onclick = () => {
+        this.activeFilter = btn.dataset.filter;
+        this.renderFilters(); // Re-render to update active state
+        this.render();
+      };
     });
   }
 
   render() {
     this.grid.innerHTML = '';
-    if (this.posts.length === 0) {
+    
+    const filteredPosts = this.activeFilter === 'all' 
+      ? this.posts 
+      : this.posts.filter(p => {
+          const outType = this.getSimleType(p.mime_type);
+          const inType = this.getSimleType(p.payload_type);
+          return `${outType} → ${inType}` === this.activeFilter;
+        });
+
+    if (filteredPosts.length === 0) {
       this.grid.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--muted);">
-          No songs posted yet. Be the first to share your hidden audio!
+          No files found for this filter.
         </div>`;
       return;
     }
     
-    this.posts.forEach(post => {
+    filteredPosts.forEach(post => {
+      const cardWrap = document.createElement('div');
+      cardWrap.className = 'gallery-card-wrap'; // Wrapper for layout
+      
       const card = document.createElement('div');
-      card.className = 'gallery-card';
+      card.className = 'gallery-card-media'; // Inner media container
+      
       const avatar = post.username ? `https://images.websim.com/avatar/${post.username}` : null;
       const fileUrl = post.file_url || post.image_url;
       const mime = post.mime_type || 'image/png';
       
+      const outType = this.getSimleType(post.mime_type);
+      const inType = this.getSimleType(post.payload_type);
+      
       let previewHtml;
       
-      // Payload badge logic
+      // Visual Badge Logic
       const payloadType = post.payload_type || '';
       let badgeHtml = '';
+      // We keep the badge on the image for quick scanning, but detail is below now too.
       if (payloadType.startsWith('video/')) {
         badgeHtml = `<div class="gallery-type-badge">🎬 Video</div>`;
       } else if (payloadType.startsWith('audio/')) {
@@ -76,23 +160,36 @@ export class Gallery {
         ${previewHtml}
         ${badgeHtml}
         <div class="gallery-play-icon"></div>
-        <div class="gallery-overlay">
-          <div class="gallery-info">
-            <div class="gallery-title">${post.title || 'Untitled'}</div>
-            <div class="gallery-artist">
-              ${avatar ? `<img src="${avatar}" class="gallery-avatar" alt="" onerror="this.style.display='none'">` : ''}
-              ${post.artist || post.username || 'Anonymous'}
-            </div>
-          </div>
+      `;
+      
+      const details = document.createElement('div');
+      details.className = 'gallery-details';
+      details.innerHTML = `
+        <div class="gallery-row-main">
+           <div class="gallery-title" title="${post.title || 'Untitled'}">${post.title || 'Untitled'}</div>
+        </div>
+        <div class="gallery-meta-row">
+           <div class="gallery-artist">
+              ${avatar ? `<img src="${avatar}" class="gallery-avatar" alt="">` : '<div class="gallery-avatar-placeholder"></div>'}
+              <span>${post.artist || post.username || 'Anonymous'}</span>
+           </div>
+        </div>
+        <div class="gallery-types">
+           <span class="type-tag">${outType}</span>
+           <span class="type-arrow">→</span>
+           <span class="type-tag highlight">${inType}</span>
         </div>
       `;
+
+      cardWrap.appendChild(card);
+      cardWrap.appendChild(details);
       
       const vid = card.querySelector('video');
       if (vid) {
         card.addEventListener('mouseenter', () => {
           const p = vid.play();
           if (p && typeof p.catch === 'function') {
-            p.catch(() => {}); // Ignore interactions that interrupt play
+            p.catch(() => {});
           }
         });
         card.addEventListener('mouseleave', () => {
@@ -101,8 +198,8 @@ export class Gallery {
         });
       }
 
-      card.onclick = () => this.onPlay(post);
-      this.grid.appendChild(card);
+      cardWrap.onclick = () => this.onPlay(post);
+      this.grid.appendChild(cardWrap);
     });
   }
 
