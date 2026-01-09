@@ -108,22 +108,38 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
   const mime = (mimeType || '').toLowerCase();
   let typeLabel = 'File';
 
+  // Error handling for media
+  const onError = (e) => {
+    console.error("Media playback error:", e);
+    // Fallback to binary download if media fails
+    resetMediaDisplay();
+    modalMeta.innerHTML = `<span style="color:var(--vw-pink)">Playback failed (codec unsupported?). <br>Download to play locally.</span>`;
+    modalDownloadLink.style.display = 'inline-block';
+    modalDownloadLink.href = url || '#';
+    modalDownloadLink.download = `extracted_${Date.now()}.bin`;
+    modalDownloadBtn.textContent = 'Download File';
+  };
+
   if (mime.startsWith('audio/')) {
     typeLabel = 'Audio';
     modalAudio.src = url;
     modalAudio.style.display = 'block';
+    modalAudio.onerror = onError;
     activeMediaElement = modalAudio;
     showPlaybackControls();
-    modalAudio.play().catch(() => {});
+    const p = modalAudio.play();
+    if (p) p.catch(e => console.warn("Audio autoplay blocked", e));
   } 
   else if (mime.startsWith('video/')) {
     typeLabel = 'Video';
     modalVideo.src = url;
     modalVideo.style.display = 'block';
-    modalVideo.style.minHeight = '240px'; // Prevent collapse if metadata loads slowly
+    modalVideo.style.minHeight = '240px'; 
+    modalVideo.onerror = onError;
     activeMediaElement = modalVideo;
     showPlaybackControls();
-    modalVideo.play().catch(() => {});
+    const p = modalVideo.play();
+    if (p) p.catch(e => console.warn("Video autoplay blocked", e));
   } 
   else if (mime.startsWith('image/')) {
     typeLabel = 'Image';
@@ -184,6 +200,11 @@ function resetMediaDisplay() {
   
   activeMediaElement = null;
   modalTextViewer.textContent = '';
+  // Ensure we stop loading previous resources
+  modalAudio.src = "";
+  modalVideo.src = "";
+  modalAudio.load();
+  modalVideo.load();
 }
 
 function showPlaybackControls() {

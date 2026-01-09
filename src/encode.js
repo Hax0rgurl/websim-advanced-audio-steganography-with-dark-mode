@@ -2,7 +2,7 @@ import { state } from "state";
 import { renderOverlaysToContext } from "overlays";
 import { goToStep } from "wizard";
 import { buildHeader, embedBitsLSB, genericAppend, encodeWavLSB, PRNG_SEED, CHANNELS_USED, LSB_DEPTH, capacityBytesForDims } from "stego";
-import { drawScaledImageToCover, prettyBytes } from "utils";
+import { drawScaledImageToCover, prettyBytes, getMimeFromName } from "utils";
 import { Gallery } from "gallery";
 
 // Refs
@@ -102,8 +102,13 @@ async function encodePayload() {
   try {
     const payloadBuf = await state.currentPayloadFile.arrayBuffer();
     const payloadBytes = new Uint8Array(payloadBuf);
-    const mime = state.currentPayloadFile.type || 'application/octet-stream';
     const name = state.currentPayloadFile.name || 'file';
+    let mime = state.currentPayloadFile.type;
+    
+    // Better mime inference if missing or generic
+    if (!mime || mime === 'application/octet-stream') {
+      mime = getMimeFromName(name);
+    }
 
     if (state.isImageCarrier) {
       await encodeImageLSBFlow(payloadBytes, mime, name);

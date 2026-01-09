@@ -1,5 +1,6 @@
 import { openPlayerModal, updatePlayerModalContent } from "player";
 import { extractBitsLSB, genericExtract, decodeWavLSB, parseHeader, PRNG_SEED, capacityBytesForDims } from "stego";
+import { getMimeFromName } from "utils";
 
 // Refs
 const stegoInput = document.getElementById('stegoInput');
@@ -27,6 +28,11 @@ export async function decodeStegoBlob(blob) {
     try {
       result = await tryDecodeImageLSB(blob);
     } catch (e) { console.log('Image LSB check failed', e); }
+  }
+  
+  // Refine result mime type if generic
+  if (result && (result.mimeType === 'application/octet-stream' || !result.mimeType)) {
+    result.mimeType = getMimeFromName(result.filename);
   }
 
   // 2. Try WAV LSB if it looks like audio/wav
