@@ -21,11 +21,17 @@ export class Gallery {
     this.editModal = document.getElementById('editModal');
     this.editTitleInput = document.getElementById('editTitle');
     this.editArtistInput = document.getElementById('editArtist');
+    this.editArtistToggle = document.getElementById('editArtistToggle');
     this.editSaveBtn = document.getElementById('editSaveBtn');
     this.editCloseBtn = document.getElementById('editCloseBtn');
     this.currentEditId = null;
 
     if (this.editModal) {
+      this.editArtistToggle.onchange = () => {
+        this.editArtistInput.style.display = this.editArtistToggle.checked ? 'block' : 'none';
+        if (this.editArtistToggle.checked) this.editArtistInput.focus();
+      };
+      
       this.editCloseBtn.onclick = () => this.closeEditModal();
       this.editSaveBtn.onclick = () => this.saveEdit();
       // Click outside to close
@@ -282,7 +288,12 @@ export class Gallery {
   openEditModal(post) {
     this.currentEditId = post.id;
     this.editTitleInput.value = post.title || '';
+    
+    const hasArtist = !!(post.artist && post.artist.trim());
     this.editArtistInput.value = post.artist || '';
+    this.editArtistToggle.checked = hasArtist;
+    this.editArtistInput.style.display = hasArtist ? 'block' : 'none';
+    
     this.editModal.classList.add('open');
     this.editModal.setAttribute('aria-hidden', 'false');
   }
@@ -296,7 +307,7 @@ export class Gallery {
   async saveEdit() {
     if (!this.currentEditId) return;
     const title = this.editTitleInput.value;
-    const artist = this.editArtistInput.value;
+    const artist = this.editArtistToggle.checked ? this.editArtistInput.value : '';
     
     this.editSaveBtn.disabled = true;
     this.editSaveBtn.textContent = 'Saving...';

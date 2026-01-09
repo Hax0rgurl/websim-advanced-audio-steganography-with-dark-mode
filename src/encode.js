@@ -26,6 +26,7 @@ const publishModal = document.getElementById('publishModal');
 const publishCloseBtn = document.getElementById('publishCloseBtn');
 const publishTitle = document.getElementById('publishTitle');
 const publishArtist = document.getElementById('publishArtist');
+const publishArtistToggle = document.getElementById('publishArtistToggle');
 const confirmPublishBtn = document.getElementById('confirmPublishBtn');
 
 function updateDropLabel(inputElement, file) {
@@ -267,10 +268,21 @@ function setupDownloadBtn(filename, url) {
 }
 
 function initPublishModal(gallery) {
+  // Toggle Logic
+  publishArtistToggle.addEventListener('change', () => {
+    publishArtist.style.display = publishArtistToggle.checked ? 'block' : 'none';
+    if (publishArtistToggle.checked) publishArtist.focus();
+  });
+
   function openPublish() {
     if (!state.currentStegoBlob) return;
     publishTitle.value = '';
     publishArtist.value = '';
+    
+    // Default to off
+    publishArtistToggle.checked = false;
+    publishArtist.style.display = 'none';
+    
     publishModal.classList.add('open');
     publishModal.setAttribute('aria-hidden', 'false');
   }
@@ -288,7 +300,8 @@ function initPublishModal(gallery) {
     confirmPublishBtn.textContent = 'Uploading...';
     try {
       const payloadType = state.currentPayloadFile ? state.currentPayloadFile.type : 'application/octet-stream';
-      await gallery.uploadPost(state.currentStegoBlob, publishTitle.value, publishArtist.value, payloadType);
+      const artist = publishArtistToggle.checked ? publishArtist.value : '';
+      await gallery.uploadPost(state.currentStegoBlob, publishTitle.value, artist, payloadType);
       statusElement.textContent = 'Song published to Community Gallery!';
       closePublish();
       document.getElementById('tab-gallery').click();
