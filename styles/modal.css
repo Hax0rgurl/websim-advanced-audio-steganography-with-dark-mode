@@ -85,6 +85,12 @@
   border-radius: 12px;
   box-shadow: 0 0 0 1px var(--glass-border), 0 8px 22px var(--shadow-1), 0 0 28px rgba(255,106,213,0.20);
 }
+.player-image.placeholder {
+  padding: 80px;
+  background: rgba(255,255,255,0.02);
+  border-style: solid;
+  border-color: var(--glass-border);
+}
 .player-panel {
   display: grid;
   gap: 12px;

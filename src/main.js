@@ -25,10 +25,14 @@ const statusElement = document.getElementById('status');
 const modalMeta = document.getElementById('modalMeta');
 
 const gallery = new Gallery(room, galleryGrid, async (post) => {
+  const fileUrl = post.file_url || post.image_url;
+  const mime = post.mime_type || 'image/png';
+  const displayImage = mime.startsWith('image/') ? fileUrl : null;
+
   openPlayerModal(
-    post.image_url, 
+    displayImage, 
     null, 
-    post.title || 'Untitled Song', 
+    post.title || 'Untitled', 
     post.artist || 'Unknown Artist',
     null, 0
   );
@@ -36,7 +40,7 @@ const gallery = new Gallery(room, galleryGrid, async (post) => {
   try {
     statusElement.textContent = `Loading "${post.title}"...`;
     
-    const response = await fetch(post.image_url);
+    const response = await fetch(fileUrl);
     const blob = await response.blob();
     
     const result = await decodeStegoBlob(blob);

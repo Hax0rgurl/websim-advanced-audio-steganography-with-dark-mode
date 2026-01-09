@@ -31,9 +31,24 @@ export class Gallery {
       const card = document.createElement('div');
       card.className = 'gallery-card';
       const avatar = post.username ? `https://images.websim.com/avatar/${post.username}` : null;
+      const fileUrl = post.file_url || post.image_url;
+      const mime = post.mime_type || 'image/png';
       
+      let previewHtml;
+      if (mime.startsWith('image/')) {
+        previewHtml = `<img src="${fileUrl}" class="gallery-img" loading="lazy" alt="${post.title || 'Stego Media'}">`;
+      } else if (mime.startsWith('audio/')) {
+        previewHtml = `<div class="gallery-generic-preview audio">
+          <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+        </div>`;
+      } else {
+        previewHtml = `<div class="gallery-generic-preview file">
+          <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+        </div>`;
+      }
+
       card.innerHTML = `
-        <img src="${post.image_url}" class="gallery-img" loading="lazy" alt="${post.title || 'Stego Song'}">
+        ${previewHtml}
         <div class="gallery-play-icon"></div>
         <div class="gallery-overlay">
           <div class="gallery-info">
@@ -51,13 +66,15 @@ export class Gallery {
   }
 
   async uploadPost(blob, title, artist) {
-    // 1. Upload image to blob storage
+    // 1. Upload file to blob storage
     const url = await window.websim.upload(blob);
     // 2. Create record
     const record = await this.room.collection('stego_post').create({
-      image_url: url,
+      file_url: url,
+      image_url: url, // Fallback for legacy
       title: title || 'Untitled',
-      artist: artist || 'Unknown Artist'
+      artist: artist || 'Unknown Artist',
+      mime_type: blob.type || 'application/octet-stream'
     });
     return record;
   }
