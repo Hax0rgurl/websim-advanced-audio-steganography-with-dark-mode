@@ -36,7 +36,16 @@ export function initPlayer() {
   playerModal.addEventListener('click', (e) => { if (e.target === playerModal) closePlayerModal(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && playerModal.classList.contains('open')) closePlayerModal(); });
   
-  modalPlayBtn.addEventListener('click', () => activeMediaElement?.play());
+  modalPlayBtn.addEventListener('click', () => {
+    if (activeMediaElement) {
+      const p = activeMediaElement.play();
+      if (p && p.catch) {
+        p.catch(e => {
+          if (e.name !== 'AbortError') console.warn("Playback interrupted:", e);
+        });
+      }
+    }
+  });
   modalPauseBtn.addEventListener('click', () => activeMediaElement?.pause());
   modalLoopChk.addEventListener('change', () => { 
     if(activeMediaElement) activeMediaElement.loop = modalLoopChk.checked; 
@@ -122,23 +131,16 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     
     // MEDIA_ERR_NETWORK(2), MEDIA_ERR_DECODE(3), MEDIA_ERR_SRC_NOT_SUPPORTED(4)
     if (err.code >= 2) {
-        // Log detailed error for debugging but don't panic
-        console.warn("Media Error Details:", err.message, "Code:", err.code);
+        el.onerror = null; // Remove handler to prevent loop
+        el.removeAttribute('src'); // Detach source immediately
         
-        el.onerror = null; 
+        // Don't call resetMediaDisplay() here as it triggers .load() which might loop errors
+        el.style.display = 'none';
         
-        // Don't hide the player immediately, it might just need a user click or it's partial.
-        // But if it's decode error, it's likely fatal for playback.
-        
-        // Show fallback UI nicely
-        modalMeta.innerHTML = `
-            <div style="background:rgba(255,0,0,0.1); padding:8px; border-radius:8px; margin-top:8px;">
-                <div style="color:var(--vw-pink); font-weight:bold;">Playback Error</div>
-                <div style="font-size:12px; opacity:0.8;">Browser cannot play this file directly.</div>
-            </div>`;
-            
+        // Show fallback
+        modalMeta.innerHTML = `<span style="color:var(--vw-pink)">Playback failed (Codec/Format not supported).<br>Please download to play.</span>`;
         modalDownloadLink.style.display = 'inline-block';
-        modalDownloadBtn.classList.remove('secondary'); // Highlight download button
+        modalDownloadLink.href = url || '#';
     }
   };
 
@@ -154,27 +156,20 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     modalAudio.onerror = onError;
     activeMediaElement = modalAudio;
     showPlaybackControls();
-    // Try to play but handle failure gracefully
     const p = modalAudio.play();
-    if (p) p.catch(e => console.log("Audio autoplay prevented (user interaction needed)", e));
+    if (p && p.catch) p.catch(e => { if (e.name !== 'AbortError') console.warn("Audio autoplay blocked", e); });
   } 
   else if (isVideo) {
     typeLabel = 'Video';
     modalVideo.style.display = 'block';
     modalVideo.style.minHeight = '240px'; 
     modalVideo.src = url;
+    modalVideo.load(); 
     modalVideo.onerror = onError;
     activeMediaElement = modalVideo;
     showPlaybackControls();
-    
-    // Force load to ensure codec check happens immediately
-    try {
-        modalVideo.load();
-        const p = modalVideo.play();
-        if (p) p.catch(e => console.log("Video autoplay prevented (user interaction needed)", e));
-    } catch(e) {
-        console.warn("Video load error", e);
-    }
+    const p = modalVideo.play();
+    if (p && p.catch) p.catch(e => { if (e.name !== 'AbortError') console.warn("Video autoplay blocked", e); });
   } 
   else if (mime.startsWith('image/')) {
     typeLabel = 'Image';
