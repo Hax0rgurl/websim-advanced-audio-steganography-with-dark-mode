@@ -35,6 +35,20 @@ export class Gallery {
       const mime = post.mime_type || 'image/png';
       
       let previewHtml;
+      
+      // Payload badge logic
+      const payloadType = post.payload_type || '';
+      let badgeHtml = '';
+      if (payloadType.startsWith('video/')) {
+        badgeHtml = `<div class="gallery-type-badge">🎬 Video</div>`;
+      } else if (payloadType.startsWith('audio/')) {
+        badgeHtml = `<div class="gallery-type-badge">🎵 Audio</div>`;
+      } else if (payloadType.startsWith('text/')) {
+        badgeHtml = `<div class="gallery-type-badge">📝 Text</div>`;
+      } else if (payloadType && !payloadType.startsWith('application/octet-stream')) {
+        badgeHtml = `<div class="gallery-type-badge">📁 File</div>`;
+      }
+
       if (mime.startsWith('image/')) {
         previewHtml = `<img src="${fileUrl}" class="gallery-img" loading="lazy" alt="${post.title || 'Stego Media'}">`;
       } else if (mime.startsWith('video/')) {
@@ -60,6 +74,7 @@ export class Gallery {
 
       card.innerHTML = `
         ${previewHtml}
+        ${badgeHtml}
         <div class="gallery-play-icon"></div>
         <div class="gallery-overlay">
           <div class="gallery-info">
@@ -76,7 +91,7 @@ export class Gallery {
     });
   }
 
-  async uploadPost(blob, title, artist) {
+  async uploadPost(blob, title, artist, payloadType) {
     // 1. Upload file to blob storage
     const url = await window.websim.upload(blob);
     // 2. Create record
@@ -85,7 +100,8 @@ export class Gallery {
       image_url: url, // Fallback for legacy
       title: title || 'Untitled',
       artist: artist || 'Unknown Artist',
-      mime_type: blob.type || 'application/octet-stream'
+      mime_type: blob.type || 'application/octet-stream',
+      payload_type: payloadType || 'application/octet-stream'
     });
     return record;
   }

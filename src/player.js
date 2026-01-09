@@ -120,9 +120,10 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     typeLabel = 'Video';
     modalVideo.src = url;
     modalVideo.style.display = 'block';
+    modalVideo.style.minHeight = '240px'; // Prevent collapse if metadata loads slowly
     activeMediaElement = modalVideo;
     showPlaybackControls();
-    modalVideo.play().catch(() => {});
+    modalVideo.play().catch((e) => console.warn("Autoplay blocked:", e));
   } 
   else if (mime.startsWith('image/')) {
     typeLabel = 'Image';

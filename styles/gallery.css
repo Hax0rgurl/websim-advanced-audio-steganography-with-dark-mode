@@ -135,3 +135,20 @@
 }
 .gallery-generic-preview.audio { color: var(--vw-pink); }
 .gallery-generic-preview.file { color: var(--vw-cyan); }
+
+.gallery-type-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}

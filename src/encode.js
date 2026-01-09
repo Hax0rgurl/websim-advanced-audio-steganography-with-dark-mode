@@ -273,7 +273,8 @@ function initPublishModal(gallery) {
     confirmPublishBtn.disabled = true;
     confirmPublishBtn.textContent = 'Uploading...';
     try {
-      await gallery.uploadPost(state.currentStegoBlob, publishTitle.value, publishArtist.value);
+      const payloadType = state.currentPayloadFile ? state.currentPayloadFile.type : 'application/octet-stream';
+      await gallery.uploadPost(state.currentStegoBlob, publishTitle.value, publishArtist.value, payloadType);
       statusElement.textContent = 'Song published to Community Gallery!';
       closePublish();
       document.getElementById('tab-gallery').click();
