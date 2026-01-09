@@ -120,7 +120,13 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     modalDownloadBtn.textContent = 'Download File';
   };
 
-  if (mime.startsWith('audio/')) {
+  // Check if browser actually supports this media type before trying to play
+  const isAudio = mime.startsWith('audio/');
+  const isVideo = mime.startsWith('video/');
+  const audioSupported = isAudio && (modalAudio.canPlayType(mime) !== '');
+  const videoSupported = isVideo && (modalVideo.canPlayType(mime) !== '');
+
+  if (isAudio && audioSupported) {
     typeLabel = 'Audio';
     modalAudio.src = url;
     modalAudio.style.display = 'block';
@@ -130,12 +136,12 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     const p = modalAudio.play();
     if (p) p.catch(e => { if (e.name !== 'AbortError') console.warn("Audio autoplay blocked", e); });
   } 
-  else if (mime.startsWith('video/')) {
+  else if (isVideo && videoSupported) {
     typeLabel = 'Video';
     modalVideo.style.display = 'block';
     modalVideo.style.minHeight = '240px'; 
     modalVideo.src = url;
-    modalVideo.load(); // Explicit load required for some browsers when reusing elements
+    modalVideo.load(); 
     modalVideo.onerror = onError;
     activeMediaElement = modalVideo;
     showPlaybackControls();
@@ -160,6 +166,8 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     });
   } 
   else {
+    if (isAudio) typeLabel = 'Audio';
+    if (isVideo) typeLabel = 'Video';
     modalMeta.textContent = `Binary Content (${mime}) • ${prettyBytes(sizeBytes || 0)}`;
   }
 

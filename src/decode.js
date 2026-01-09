@@ -76,7 +76,8 @@ export async function decodeStegoBlob(blob) {
 }
 
 async function tryDecodeImageLSB(blob) {
-  const image = await createImageBitmap(blob);
+  // Critical: Disable color space conversion to preserve LSB data integrity
+  const image = await createImageBitmap(blob, { colorSpaceConversion: 'none' });
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   canvas.width = image.width;
