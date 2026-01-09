@@ -179,7 +179,8 @@ async function encodeImageLSBFlow(payloadBytes, mime, name) {
   await renderOverlaysToContext(ctx, dim, dim);
   
   const bakedBlob = await new Promise(r => bakeCanvas.toBlob(r, 'image/png'));
-  const bakedBitmap = await createImageBitmap(bakedBlob);
+  // Use colorSpaceConversion: 'none' to ensure consistency with decode logic
+  const bakedBitmap = await createImageBitmap(bakedBlob, { colorSpaceConversion: 'none' });
   
   // 2. Prepare Payload with Header
   const header = buildHeader(payloadBytes.length, mime, name);

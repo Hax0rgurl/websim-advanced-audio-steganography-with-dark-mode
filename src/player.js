@@ -110,23 +110,27 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
 
   // Error handling for media
   const onError = (e) => {
-    console.error("Media playback error:", e);
-    // Fallback to binary download if media fails
-    resetMediaDisplay();
-    modalMeta.innerHTML = `<span style="color:var(--vw-pink)">Playback failed (codec unsupported?). <br>Download to play locally.</span>`;
-    modalDownloadLink.style.display = 'inline-block';
-    modalDownloadLink.href = url || '#';
+    const err = e.target.error;
+    console.warn("Media playback warning/error:", err);
+    // We don't hide the player immediately to avoid UI flashing if it's a minor hiccup,
+    // but if it's a true error state (code 4), we show the fallback message.
+    if (err && err.code >= 3) { // MEDIA_ERR_DECODE or MEDIA_ERR_SRC_NOT_SUPPORTED
+        resetMediaDisplay(); 
+        modalMeta.innerHTML = `<span style="color:var(--vw-pink)">Playback failed (Codec/Format not supported by browser). <br>Please download to play.</span>`;
+        modalDownloadLink.style.display = 'inline-block';
+        modalDownloadLink.href = url || '#';
+    }
+  };
     modalDownloadLink.download = `extracted_${Date.now()}.bin`;
     modalDownloadBtn.textContent = 'Download File';
   };
 
-  // Check if browser actually supports this media type before trying to play
+  // Attempt to play media if mime type matches, trusting the browser's native capabilities
+  // rather than strict pre-checks which often fail for valid containers (e.g. mkv, mov).
   const isAudio = mime.startsWith('audio/');
   const isVideo = mime.startsWith('video/');
-  const audioSupported = isAudio && (modalAudio.canPlayType(mime) !== '');
-  const videoSupported = isVideo && (modalVideo.canPlayType(mime) !== '');
 
-  if (isAudio && audioSupported) {
+  if (isAudio) {
     typeLabel = 'Audio';
     modalAudio.src = url;
     modalAudio.style.display = 'block';
@@ -136,7 +140,7 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     const p = modalAudio.play();
     if (p) p.catch(e => { if (e.name !== 'AbortError') console.warn("Audio autoplay blocked", e); });
   } 
-  else if (isVideo && videoSupported) {
+  else if (isVideo) {
     typeLabel = 'Video';
     modalVideo.style.display = 'block';
     modalVideo.style.minHeight = '240px'; 
