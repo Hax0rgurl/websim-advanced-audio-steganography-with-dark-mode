@@ -352,17 +352,24 @@
             <div class="player-layout">
               <img id="modalImage" class="player-image" alt="Stego image preview">
               <div class="player-panel">
-                <audio id="modalAudio" controls preload="metadata" style="width:100%;"></audio>
+                <div id="mediaContainer" class="media-container">
+                  <audio id="modalAudio" controls preload="metadata" style="width:100%; display:none;"></audio>
+                  <video id="modalVideo" controls preload="metadata" style="width:100%; max-height:300px; display:none; border-radius:8px;"></video>
+                  <img id="modalImageViewer" style="width:100%; max-height:300px; object-fit:contain; display:none; border-radius:8px;">
+                  <div id="modalTextViewer" style="width:100%; max-height:300px; overflow:auto; white-space:pre-wrap; font-family:monospace; padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; display:none; font-size:13px; color:var(--text-color);"></div>
+                </div>
+
                 <div class="inline-controls">
-                  <button id="modalPlayBtn" type="button">Play</button>
-                  <button id="modalPauseBtn" type="button" class="secondary">Pause</button>
-                  <label class="inline">
+                  <!-- Playback controls (Audio/Video only) -->
+                  <button id="modalPlayBtn" type="button" style="display:none;">Play</button>
+                  <button id="modalPauseBtn" type="button" class="secondary" style="display:none;">Pause</button>
+                  <label class="inline" id="modalLoopLabel" style="display:none;">
                     <input type="checkbox" id="modalLoopChk">
                     Loop
                   </label>
-                  <!-- Audio download hidden -->
+                  
                   <a id="modalDownloadLink" class="download" style="display:none;">
-                    <button type="button" class="secondary">Download Audio</button>
+                    <button id="modalDownloadBtn" type="button" class="secondary">Download File</button>
                   </a>
                 </div>
                 <div id="modalMeta" class="hint"></div>

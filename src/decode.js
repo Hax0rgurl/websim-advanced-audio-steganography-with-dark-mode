@@ -1,4 +1,4 @@
-import { openPlayerModal, updatePlayerModalAudio } from "player";
+import { openPlayerModal, updatePlayerModalContent } from "player";
 import { extractBitsLSB, genericExtract, decodeWavLSB, parseHeader, PRNG_SEED, capacityBytesForDims } from "stego";
 
 // Refs

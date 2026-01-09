@@ -4,7 +4,7 @@ import { initCrop } from "crop";
 import { initOverlays } from "overlays";
 import { initEncode } from "encode";
 import { initDecode, decodeStegoBlob } from "decode";
-import { initPlayer, openPlayerModal, updatePlayerModalAudio } from "player";
+import { initPlayer, openPlayerModal, updatePlayerModalContent } from "player";
 import { Gallery } from "gallery";
 
 // Initialize WebsimSocket
@@ -45,7 +45,7 @@ const gallery = new Gallery(room, galleryGrid, async (post) => {
     
     const result = await decodeStegoBlob(blob);
     
-    updatePlayerModalAudio(result.url, result.mimeType, result.size);
+    updatePlayerModalContent(result.url, result.mimeType, result.size);
     statusElement.textContent = `Playing "${post.title}".`;
   } catch (e) {
     console.error(e);
