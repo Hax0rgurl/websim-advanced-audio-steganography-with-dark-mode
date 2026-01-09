@@ -132,9 +132,10 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
   } 
   else if (mime.startsWith('video/')) {
     typeLabel = 'Video';
-    modalVideo.src = url;
     modalVideo.style.display = 'block';
     modalVideo.style.minHeight = '240px'; 
+    modalVideo.src = url;
+    modalVideo.load(); // Explicit load required for some browsers when reusing elements
     modalVideo.onerror = onError;
     activeMediaElement = modalVideo;
     showPlaybackControls();
