@@ -21,9 +21,9 @@ export function initCrop() {
 }
 
 export async function prepareStep2() {
-  if (!state.currentImageFile) return;
+  if (!state.currentCarrierFile) return;
   
-  const bmp = await createImageBitmap(state.currentImageFile);
+  const bmp = await createImageBitmap(state.currentCarrierFile);
   
   // Default center crop
   const side = Math.min(bmp.width, bmp.height);
@@ -60,7 +60,7 @@ function enableCropEditor() {
   btnStep2Next.style.display = 'none';
   cropAreaCard.style.display = 'block';
   
-  const url = URL.createObjectURL(state.currentImageFile);
+  const url = URL.createObjectURL(state.currentCarrierFile);
   cropImageTarget.src = url;
   
   if (state.cropper) state.cropper.destroy();
