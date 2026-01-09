@@ -84,7 +84,7 @@ export function openPlayerModal(carrierUrl, carrierMime, contentURL, title, arti
 
   // Set Title and Artist
   playerModalTitle.innerHTML = `
-    <div style="line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 90%;">${title || 'Unknown'}</div>
+    <div style="line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${title || 'Unknown'}</div>
     <div style="font-size:12px; font-weight:400; opacity:0.7; margin-top:2px;">${artist || ''}</div>
   `;
 

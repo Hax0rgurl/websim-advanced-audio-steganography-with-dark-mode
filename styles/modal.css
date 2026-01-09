@@ -52,6 +52,9 @@
   font-weight: 900;
   letter-spacing: 0.02em;
   text-shadow: 0 0 8px rgba(96,165,250,0.35);
+  flex: 1;
+  min-width: 0;
+  padding-right: 12px;
 }
 .modal-close {
   background: linear-gradient(180deg, color-mix(in oklab, var(--button-bg) 82%, black), var(--button-bg));
