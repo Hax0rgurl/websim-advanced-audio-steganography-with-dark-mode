@@ -21,28 +21,34 @@ export function initCrop() {
 }
 
 export async function prepareStep2() {
-  if (!state.currentCarrierFile) return;
+  if (!state.currentCarrierFile) return false;
   
-  const bmp = await createImageBitmap(state.currentCarrierFile);
-  
-  // Default center crop
-  const side = Math.min(bmp.width, bmp.height);
-  const outSide = Math.min(3000, side);
-  
-  const c = document.createElement('canvas');
-  c.width = outSide; c.height = outSide;
-  const ctx = c.getContext('2d');
-  const sx = (bmp.width - side) / 2;
-  const sy = (bmp.height - side) / 2;
-  ctx.drawImage(bmp, sx, sy, side, side, 0, 0, outSide, outSide);
-  
-  const blob = await new Promise(r => c.toBlob(r, 'image/png'));
-  state.croppedImageBitmap = await createImageBitmap(blob);
-  
-  step2Preview.src = URL.createObjectURL(blob);
-  imageInfo.textContent = `Current Size: ${outSide}x${outSide} (1:1)`;
-  
-  resetCropUI();
+  try {
+    const bmp = await createImageBitmap(state.currentCarrierFile);
+    
+    // Default center crop
+    const side = Math.min(bmp.width, bmp.height);
+    const outSide = Math.min(3000, side);
+    
+    const c = document.createElement('canvas');
+    c.width = outSide; c.height = outSide;
+    const ctx = c.getContext('2d');
+    const sx = (bmp.width - side) / 2;
+    const sy = (bmp.height - side) / 2;
+    ctx.drawImage(bmp, sx, sy, side, side, 0, 0, outSide, outSide);
+    
+    const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+    state.croppedImageBitmap = await createImageBitmap(blob);
+    
+    step2Preview.src = URL.createObjectURL(blob);
+    imageInfo.textContent = `Current Size: ${outSide}x${outSide} (1:1)`;
+    
+    resetCropUI();
+    return true;
+  } catch (e) {
+    console.error("Failed to process image:", e);
+    return false;
+  }
 }
 
 function resetCropUI() {

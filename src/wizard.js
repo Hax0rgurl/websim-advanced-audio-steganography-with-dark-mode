@@ -21,10 +21,7 @@ const audioInput = document.getElementById('audioInput');
 let currentStep = 1;
 
 export function initWizard() {
-  btnStep1Next.addEventListener('click', () => {
-    prepareStep2();
-    goToStep(2);
-  });
+  /* Replaced by unified handler below */
   
   btnStep2Next.addEventListener('click', () => {
     if (!state.croppedImageBitmap) {
@@ -73,12 +70,28 @@ export function initWizard() {
     }
   });
   
-  // Hijack Next Step Logic for Skipping
-  btnStep1Next.onclick = (e) => {
+  // Unified Next Step Logic
+  btnStep1Next.onclick = async (e) => {
     e.stopImmediatePropagation();
+    
     if (state.isImageCarrier) {
-       prepareStep2();
-       goToStep(2);
+       const originalText = btnStep1Next.textContent;
+       btnStep1Next.textContent = "Processing...";
+       btnStep1Next.disabled = true;
+       
+       const success = await prepareStep2();
+       
+       btnStep1Next.disabled = false;
+       btnStep1Next.textContent = originalText;
+
+       if (success) {
+         goToStep(2);
+       } else {
+         // Fallback to generic mode if image processing failed
+         console.warn("Image processing failed. Falling back to generic file mode.");
+         state.isImageCarrier = false;
+         goToStep(4);
+       }
     } else {
        // Skip Crop & Overlays if not an image
        goToStep(4);
