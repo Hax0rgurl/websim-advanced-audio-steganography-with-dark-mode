@@ -78,9 +78,12 @@ export async function decodeStegoBlob(blob) {
 async function tryDecodeImageLSB(blob) {
   const image = await createImageBitmap(blob);
   const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
   canvas.width = image.width;
   canvas.height = image.height;
+  
+  // Ensure strict pixel reading without alpha composition interference
+  ctx.globalCompositeOperation = 'copy';
   ctx.drawImage(image, 0, 0);
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);

@@ -193,9 +193,17 @@ async function encodeImageLSBFlow(payloadBytes, mime, name) {
   
   const finalCanvas = document.createElement('canvas');
   const { w, h } = drawScaledImageToCover(finalCanvas, bakedBitmap, scale);
-  const fCtx = finalCanvas.getContext('2d');
+  const fCtx = finalCanvas.getContext('2d', { willReadFrequently: true });
   const imgData = fCtx.getImageData(0,0,w,h);
   
+  // FORCE OPAQUE: Set Alpha to 255 for all pixels.
+  // This prevents browser composition/compression from altering RGB values of semi-transparent pixels,
+  // which is the #1 cause of LSB data corruption in canvas-based steganography.
+  const d = imgData.data;
+  for (let i = 3; i < d.length; i += 4) {
+    d[i] = 255;
+  }
+
   embedBitsLSB(imgData, combined, PRNG_SEED);
   fCtx.putImageData(imgData, 0,0);
   

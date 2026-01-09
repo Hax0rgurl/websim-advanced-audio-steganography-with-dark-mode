@@ -128,7 +128,7 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     activeMediaElement = modalAudio;
     showPlaybackControls();
     const p = modalAudio.play();
-    if (p) p.catch(e => console.warn("Audio autoplay blocked", e));
+    if (p) p.catch(e => { if (e.name !== 'AbortError') console.warn("Audio autoplay blocked", e); });
   } 
   else if (mime.startsWith('video/')) {
     typeLabel = 'Video';
@@ -140,7 +140,7 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     activeMediaElement = modalVideo;
     showPlaybackControls();
     const p = modalVideo.play();
-    if (p) p.catch(e => console.warn("Video autoplay blocked", e));
+    if (p) p.catch(e => { if (e.name !== 'AbortError') console.warn("Video autoplay blocked", e); });
   } 
   else if (mime.startsWith('image/')) {
     typeLabel = 'Image';
