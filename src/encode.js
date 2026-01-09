@@ -15,6 +15,7 @@ const scaleText = document.getElementById('scaleText');
 const finalStegoPreview = document.getElementById('finalStegoPreview');
 const finalStegoVideo = document.getElementById('finalStegoVideo');
 const finalStegoAudio = document.getElementById('finalStegoAudio');
+const finalStegoFrame = document.getElementById('finalStegoFrame');
 const finalStegoGeneric = document.getElementById('finalStegoGeneric');
 const downloadStegoBtn = document.getElementById('downloadStegoBtn');
 const openPublishBtn = document.getElementById('openPublishBtn');
@@ -127,6 +128,7 @@ function showFinalPreview(blob) {
   finalStegoPreview.style.display = 'none';
   finalStegoVideo.style.display = 'none';
   finalStegoAudio.style.display = 'none';
+  finalStegoFrame.style.display = 'none';
   finalStegoGeneric.style.display = 'none';
   
   // Stop playback
@@ -135,21 +137,27 @@ function showFinalPreview(blob) {
   finalStegoVideo.src = '';
   finalStegoAudio.src = '';
   finalStegoPreview.src = '';
+  finalStegoFrame.src = '';
 
-  if (blob.type.startsWith('image/')) {
+  const mime = blob.type || 'application/octet-stream';
+
+  if (mime.startsWith('image/')) {
     finalStegoPreview.src = finalPreviewUrl;
     finalStegoPreview.style.display = 'block';
-  } else if (blob.type.startsWith('video/')) {
+  } else if (mime.startsWith('video/')) {
     finalStegoVideo.src = finalPreviewUrl;
     finalStegoVideo.style.display = 'block';
-  } else if (blob.type.startsWith('audio/')) {
+  } else if (mime.startsWith('audio/')) {
     finalStegoAudio.src = finalPreviewUrl;
     finalStegoAudio.style.display = 'block';
+  } else if (mime === 'application/pdf' || mime.startsWith('text/')) {
+    finalStegoFrame.src = finalPreviewUrl;
+    finalStegoFrame.style.display = 'block';
   } else {
     finalStegoGeneric.style.display = 'block';
     finalStegoGeneric.innerHTML = `
       <div style="font-size:32px; margin-bottom:8px">📄</div>
-      <div>${blob.type || 'Unknown Type'}</div>
+      <div>${mime}</div>
       <div style="font-size:12px; opacity:0.7">${prettyBytes(blob.size)}</div>
     `;
   }

@@ -8,11 +8,13 @@ const modalImage = document.getElementById('modalImage');
 const modalCarrierVideo = document.getElementById('modalCarrierVideo');
 const modalCarrierAudioWrap = document.getElementById('modalCarrierAudioWrap');
 const modalCarrierAudio = document.getElementById('modalCarrierAudio');
+const modalCarrierFrame = document.getElementById('modalCarrierFrame');
 
 // Content Containers
 const modalAudio = document.getElementById('modalAudio');
 const modalVideo = document.getElementById('modalVideo');
 const modalImageViewer = document.getElementById('modalImageViewer');
+const modalPdfViewer = document.getElementById('modalPdfViewer');
 const modalTextViewer = document.getElementById('modalTextViewer');
 
 // Controls
@@ -52,6 +54,7 @@ export function openPlayerModal(carrierUrl, carrierMime, contentURL, title, arti
   modalImage.style.display = 'none';
   modalCarrierVideo.style.display = 'none';
   modalCarrierAudioWrap.style.display = 'none';
+  modalCarrierFrame.style.display = 'none';
   modalCarrierVideo.pause();
   modalCarrierAudio.pause();
 
@@ -64,6 +67,9 @@ export function openPlayerModal(carrierUrl, carrierMime, contentURL, title, arti
   } else if (cMime.startsWith('audio/')) {
     modalCarrierAudio.src = carrierUrl;
     modalCarrierAudioWrap.style.display = 'flex';
+  } else if (cMime === 'application/pdf' || cMime.startsWith('text/')) {
+    modalCarrierFrame.src = carrierUrl;
+    modalCarrierFrame.style.display = 'block';
   } else if (carrierUrl) {
     // Default to image or fallback
     modalImage.src = carrierUrl;
@@ -123,6 +129,11 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     modalImageViewer.src = url;
     modalImageViewer.style.display = 'block';
   } 
+  else if (mime === 'application/pdf') {
+    typeLabel = 'PDF';
+    modalPdfViewer.src = url;
+    modalPdfViewer.style.display = 'block';
+  }
   else if (mime.startsWith('text/') || mime === 'application/json' || mime.includes('xml')) {
     typeLabel = 'Text';
     modalTextViewer.style.display = 'block';
@@ -164,6 +175,7 @@ function resetMediaDisplay() {
   modalVideo.style.display = 'none';
   modalImageViewer.style.display = 'none';
   modalTextViewer.style.display = 'none';
+  modalPdfViewer.style.display = 'none';
   
   modalPlayBtn.style.display = 'none';
   modalPauseBtn.style.display = 'none';
