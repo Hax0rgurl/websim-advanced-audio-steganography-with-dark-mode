@@ -2,7 +2,7 @@ import { state } from "state";
 import { renderOverlaysToContext } from "overlays";
 import { goToStep } from "wizard";
 import { buildHeader, embedBitsLSB, genericAppend, encodeWavLSB, PRNG_SEED, CHANNELS_USED, LSB_DEPTH, capacityBytesForDims } from "stego";
-import { drawScaledImageToCover } from "utils";
+import { drawScaledImageToCover, prettyBytes } from "utils";
 import { Gallery } from "gallery";
 
 // Refs
@@ -13,6 +13,9 @@ const capacityBar = document.getElementById('capacityBar');
 const capacityText = document.getElementById('capacityText');
 const scaleText = document.getElementById('scaleText');
 const finalStegoPreview = document.getElementById('finalStegoPreview');
+const finalStegoVideo = document.getElementById('finalStegoVideo');
+const finalStegoAudio = document.getElementById('finalStegoAudio');
+const finalStegoGeneric = document.getElementById('finalStegoGeneric');
 const downloadStegoBtn = document.getElementById('downloadStegoBtn');
 const openPublishBtn = document.getElementById('openPublishBtn');
 const statusElement = document.getElementById('status');
@@ -114,6 +117,44 @@ async function encodePayload() {
   }
 }
 
+let finalPreviewUrl = null;
+
+function showFinalPreview(blob) {
+  if (finalPreviewUrl) URL.revokeObjectURL(finalPreviewUrl);
+  finalPreviewUrl = URL.createObjectURL(blob);
+  
+  // Hide all
+  finalStegoPreview.style.display = 'none';
+  finalStegoVideo.style.display = 'none';
+  finalStegoAudio.style.display = 'none';
+  finalStegoGeneric.style.display = 'none';
+  
+  // Stop playback
+  finalStegoVideo.pause();
+  finalStegoAudio.pause();
+  finalStegoVideo.src = '';
+  finalStegoAudio.src = '';
+  finalStegoPreview.src = '';
+
+  if (blob.type.startsWith('image/')) {
+    finalStegoPreview.src = finalPreviewUrl;
+    finalStegoPreview.style.display = 'block';
+  } else if (blob.type.startsWith('video/')) {
+    finalStegoVideo.src = finalPreviewUrl;
+    finalStegoVideo.style.display = 'block';
+  } else if (blob.type.startsWith('audio/')) {
+    finalStegoAudio.src = finalPreviewUrl;
+    finalStegoAudio.style.display = 'block';
+  } else {
+    finalStegoGeneric.style.display = 'block';
+    finalStegoGeneric.innerHTML = `
+      <div style="font-size:32px; margin-bottom:8px">📄</div>
+      <div>${blob.type || 'Unknown Type'}</div>
+      <div style="font-size:12px; opacity:0.7">${prettyBytes(blob.size)}</div>
+    `;
+  }
+}
+
 async function encodeImageLSBFlow(payloadBytes, mime, name) {
   // 1. Bake Overlays
   const dim = state.croppedImageBitmap.width;
@@ -148,11 +189,8 @@ async function encodeImageLSBFlow(payloadBytes, mime, name) {
   // 4. Result
   finalCanvas.toBlob(blob => {
     state.currentStegoBlob = blob;
-    const url = URL.createObjectURL(blob);
-    finalStegoPreview.src = url;
-    finalStegoPreview.style.display = 'block';
-    
-    setupDownloadBtn('stego_image.png', url);
+    showFinalPreview(blob);
+    setupDownloadBtn('stego_image.png', finalPreviewUrl);
   }, 'image/png');
 }
 
@@ -183,15 +221,9 @@ async function encodeGenericFlow(payloadBytes, mime, name) {
   const finalBlob = new Blob([resultBytes], { type: state.currentCarrierFile.type });
   state.currentStegoBlob = finalBlob;
   
-  // No image preview for generic files
-  finalStegoPreview.style.display = 'none';
-  finalStegoPreview.src = '';
+  showFinalPreview(finalBlob);
   
-  // But maybe show an icon?
-  // We'll leave it hidden for now.
-  
-  const url = URL.createObjectURL(finalBlob);
-  setupDownloadBtn(`stego_file.${ext}`, url);
+  setupDownloadBtn(`stego_file.${ext}`, finalPreviewUrl);
 }
 
 function setupDownloadBtn(filename, url) {
