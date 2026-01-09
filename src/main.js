@@ -26,11 +26,11 @@ const modalMeta = document.getElementById('modalMeta');
 
 const gallery = new Gallery(room, galleryGrid, async (post) => {
   const fileUrl = post.file_url || post.image_url;
-  const mime = post.mime_type || 'image/png';
-  const displayImage = mime.startsWith('image/') ? fileUrl : null;
+  const mime = post.mime_type || 'application/octet-stream';
 
   openPlayerModal(
-    displayImage, 
+    fileUrl, 
+    mime,
     null, 
     post.title || 'Untitled', 
     post.artist || 'Unknown Artist',

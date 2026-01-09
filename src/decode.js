@@ -128,15 +128,9 @@ async function decodeFileHandler() {
     const result = await decodeStegoBlob(stegoFile);
     
     // We create a preview URL for the source file to show in the player
-    // If it's an image, we use it. If audio/other, we use a placeholder or null?
-    let imageURL = null;
-    if (stegoFile.type.startsWith('image/')) {
-       imageURL = URL.createObjectURL(stegoFile);
-    } else {
-       // Just pass null or a generic icon logic handled in player
-    }
+    const carrierURL = URL.createObjectURL(stegoFile);
     
-    openPlayerModal(imageURL, result.url, result.filename, 'Extracted Data', result.mimeType, result.size);
+    openPlayerModal(carrierURL, stegoFile.type, result.url, result.filename, 'Extracted Data', result.mimeType, result.size);
 
     statusElement.textContent = 'Data extracted successfully!';
   } catch (error) {

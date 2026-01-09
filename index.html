@@ -353,7 +353,14 @@
           </div>
           <div class="modal-body">
             <div class="player-layout">
-              <img id="modalImage" class="player-image" alt="Stego image preview">
+              <div class="player-carrier-frame">
+                <img id="modalImage" class="player-image" alt="Stego carrier preview">
+                <video id="modalCarrierVideo" class="player-image" controls style="display:none;"></video>
+                <div id="modalCarrierAudioWrap" class="player-image placeholder" style="display:none; align-items:center; justify-content:center; flex-direction:column;">
+                   <div style="font-size:48px; margin-bottom:16px;">🎵</div>
+                   <audio id="modalCarrierAudio" controls style="width:80%;"></audio>
+                </div>
+              </div>
               <div class="player-panel">
                 <div id="mediaContainer" class="media-container">
                   <audio id="modalAudio" controls preload="metadata" style="width:100%; display:none;"></audio>

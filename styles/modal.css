@@ -70,6 +70,12 @@
   grid-template-columns: 1fr;
   gap: 14px;
 }
+.player-carrier-frame {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 @media (min-width: 920px) {
   .player-layout {
     grid-template-columns: 1.2fr 1fr;

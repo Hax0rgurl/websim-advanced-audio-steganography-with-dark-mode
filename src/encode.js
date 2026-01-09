@@ -218,7 +218,16 @@ async function encodeGenericFlow(payloadBytes, mime, name) {
     ext = state.currentCarrierFile.name.split('.').pop();
   }
   
-  const finalBlob = new Blob([resultBytes], { type: state.currentCarrierFile.type });
+  // Ensure mime type is present for preview to work
+  let mimeType = state.currentCarrierFile.type;
+  if (!mimeType) {
+     if (state.currentCarrierFile.name.match(/\.mp4$/i)) mimeType = 'video/mp4';
+     else if (state.currentCarrierFile.name.match(/\.webm$/i)) mimeType = 'video/webm';
+     else if (state.currentCarrierFile.name.match(/\.mp3$/i)) mimeType = 'audio/mpeg';
+     else if (state.currentCarrierFile.name.match(/\.wav$/i)) mimeType = 'audio/wav';
+  }
+
+  const finalBlob = new Blob([resultBytes], { type: mimeType || 'application/octet-stream' });
   state.currentStegoBlob = finalBlob;
   
   showFinalPreview(finalBlob);

@@ -5,6 +5,9 @@ const playerModal = document.getElementById('playerModal');
 const playerModalTitle = document.getElementById('playerModalTitle');
 const modalCloseBtn = document.getElementById('modalCloseBtn');
 const modalImage = document.getElementById('modalImage');
+const modalCarrierVideo = document.getElementById('modalCarrierVideo');
+const modalCarrierAudioWrap = document.getElementById('modalCarrierAudioWrap');
+const modalCarrierAudio = document.getElementById('modalCarrierAudio');
 
 // Content Containers
 const modalAudio = document.getElementById('modalAudio');
@@ -38,19 +41,38 @@ export function initPlayer() {
   });
 }
 
-export function openPlayerModal(imageURL, contentURL, title, artist, mimeType, sizeBytes) {
+export function openPlayerModal(carrierUrl, carrierMime, contentURL, title, artist, mimeType, sizeBytes) {
   // Cleanup old URLs
-  if (modalImageURL && modalImageURL !== imageURL) URL.revokeObjectURL(modalImageURL);
+  if (modalImageURL && modalImageURL !== carrierUrl) URL.revokeObjectURL(modalImageURL);
   if (modalContentURL && modalContentURL !== contentURL && modalContentURL) URL.revokeObjectURL(modalContentURL);
 
-  modalImageURL = imageURL;
+  modalImageURL = carrierUrl;
   
-  // Set Carrier Preview Image
-  if (imageURL) {
-    modalImage.src = imageURL;
+  // Reset Carrier Views
+  modalImage.style.display = 'none';
+  modalCarrierVideo.style.display = 'none';
+  modalCarrierAudioWrap.style.display = 'none';
+  modalCarrierVideo.pause();
+  modalCarrierAudio.pause();
+
+  // Set Carrier Preview
+  const cMime = (carrierMime || '').toLowerCase();
+  
+  if (cMime.startsWith('video/')) {
+    modalCarrierVideo.src = carrierUrl;
+    modalCarrierVideo.style.display = 'block';
+  } else if (cMime.startsWith('audio/')) {
+    modalCarrierAudio.src = carrierUrl;
+    modalCarrierAudioWrap.style.display = 'flex';
+  } else if (carrierUrl) {
+    // Default to image or fallback
+    modalImage.src = carrierUrl;
+    modalImage.style.display = 'block';
     modalImage.classList.remove('placeholder');
   } else {
+    // No carrier URL provided
     modalImage.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='rgba(100,116,139,0.5)' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3C/svg%3E";
+    modalImage.style.display = 'block';
     modalImage.classList.add('placeholder');
   }
 
@@ -135,6 +157,8 @@ export function closePlayerModal() {
 function resetMediaDisplay() {
   modalAudio.pause();
   modalVideo.pause();
+  modalCarrierVideo.pause();
+  modalCarrierAudio.pause();
   
   modalAudio.style.display = 'none';
   modalVideo.style.display = 'none';

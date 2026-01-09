@@ -37,6 +37,9 @@ export class Gallery {
       let previewHtml;
       if (mime.startsWith('image/')) {
         previewHtml = `<img src="${fileUrl}" class="gallery-img" loading="lazy" alt="${post.title || 'Stego Media'}">`;
+      } else if (mime.startsWith('video/')) {
+        previewHtml = `<video src="${fileUrl}" class="gallery-img" muted loop playsinline onmouseover="this.play()" onmouseout="this.pause()" style="object-fit:cover;"></video>
+        <div class="gallery-play-icon" style="pointer-events:none;"></div>`;
       } else if (mime.startsWith('audio/')) {
         previewHtml = `<div class="gallery-generic-preview audio">
           <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
