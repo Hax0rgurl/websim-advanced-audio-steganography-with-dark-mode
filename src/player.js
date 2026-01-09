@@ -110,12 +110,23 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
 
   // Error handling for media
   const onError = (e) => {
-    const err = e.target.error;
+    const el = e.target;
+    // Ignore errors if src is missing (happens during reset)
+    if (!el.getAttribute('src')) return;
+
+    const err = el.error;
+    if (!err) return;
+
     console.warn("Media playback warning/error:", err);
+    
     // We don't hide the player immediately to avoid UI flashing if it's a minor hiccup,
     // but if it's a true error state (code 4), we show the fallback message.
-    if (err && err.code >= 3) { // MEDIA_ERR_DECODE or MEDIA_ERR_SRC_NOT_SUPPORTED
+    if (err.code >= 3) { // MEDIA_ERR_DECODE or MEDIA_ERR_SRC_NOT_SUPPORTED
+        // Prevent infinite recursion by removing the error handler
+        el.onerror = null;
+        
         resetMediaDisplay(); 
+        
         modalMeta.innerHTML = `<span style="color:var(--vw-pink)">Playback failed (Codec/Format not supported by browser). <br>Please download to play.</span>`;
         modalDownloadLink.style.display = 'inline-block';
         modalDownloadLink.href = url || '#';
@@ -210,9 +221,12 @@ function resetMediaDisplay() {
   
   activeMediaElement = null;
   modalTextViewer.textContent = '';
-  // Ensure we stop loading previous resources
-  modalAudio.src = "";
-  modalVideo.src = "";
+  
+  // Ensure we stop loading previous resources safely
+  modalAudio.onerror = null;
+  modalVideo.onerror = null;
+  modalAudio.removeAttribute('src');
+  modalVideo.removeAttribute('src');
   modalAudio.load();
   modalVideo.load();
 }
