@@ -27,3 +27,30 @@ export function drawScaledImageToCover(canvas, imageBitmap, scale) {
   ctx.drawImage(imageBitmap, 0, 0, imageBitmap.width, imageBitmap.height, 0, 0, w, h);
   return { w, h };
 }
+
+export function getMimeFromName(name){
+  const ext = (name.match(/\.([^.]+)$/)?.[1] || '').toLowerCase();
+  switch (ext) {
+    case 'txt': return 'text/plain';
+    case 'json': return 'application/json';
+    case 'png': return 'image/png';
+    case 'jpg': case 'jpeg': return 'image/jpeg';
+    case 'bmp': return 'image/bmp';
+    case 'gif': return 'image/gif';
+    case 'webp': return 'image/webp';
+    case 'wav': return 'audio/wav';
+    case 'mp3': return 'audio/mpeg';
+    case 'ogg': return 'audio/ogg';
+    case 'm4a': return 'audio/mp4';
+    case 'flac': return 'audio/flac';
+    case 'pdf': return 'application/pdf';
+    case 'zip': return 'application/zip';
+    case 'apk': return 'application/vnd.android.package-archive';
+    case 'mp4': return 'video/mp4';
+    case 'webm': return 'video/webm';
+    case 'mov': return 'video/quicktime';
+    case 'avi': return 'video/x-msvideo';
+    case 'mkv': return 'video/x-matroska';
+    default: return 'application/octet-stream';
+  }
+}
