@@ -131,14 +131,11 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     
     // MEDIA_ERR_NETWORK(2), MEDIA_ERR_DECODE(3), MEDIA_ERR_SRC_NOT_SUPPORTED(4)
     if (err.code >= 2) {
-        el.onerror = null; // Remove handler to prevent loop
-        el.removeAttribute('src'); // Detach source immediately
+        // We don't hide the element immediately, as some browsers might recover or it might be a partial error
+        // But we do show the error message.
         
-        // Don't call resetMediaDisplay() here as it triggers .load() which might loop errors
-        el.style.display = 'none';
-        
-        // Show fallback
-        modalMeta.innerHTML = `<span style="color:var(--vw-pink)">Playback failed (Codec/Format not supported).<br>Please download to play.</span>`;
+        // Show fallback message, but keep player visible-ish (maybe transparent) just in case
+        modalMeta.innerHTML = `<span style="color:var(--vw-pink)">Playback error (${err.code}): Codec/Format may not be supported.<br>Try downloading the file to play locally.</span>`;
         modalDownloadLink.style.display = 'inline-block';
         modalDownloadLink.href = url || '#';
     }
@@ -236,8 +233,16 @@ function resetMediaDisplay() {
   // Ensure we stop loading previous resources safely
   modalAudio.onerror = null;
   modalVideo.onerror = null;
-  modalAudio.removeAttribute('src');
-  modalVideo.removeAttribute('src');
+  
+  // Only remove src if it exists to avoid interruption errors
+  if (modalAudio.hasAttribute('src')) {
+    modalAudio.removeAttribute('src');
+    modalAudio.load();
+  }
+  if (modalVideo.hasAttribute('src')) {
+    modalVideo.removeAttribute('src');
+    modalVideo.load();
+  }
   
   // Only call load() if we really need to reset internal buffer, 
   // but it can cause errors if src is missing. 

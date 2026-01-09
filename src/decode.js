@@ -146,5 +146,11 @@ async function decodeFileHandler() {
   } catch (error) {
     console.error(error);
     statusElement.textContent = 'Error: ' + error.message;
+    // If it was a decode error, we can still try to show the carrier
+    if (error.message.includes('No known steganography')) {
+        const carrierURL = URL.createObjectURL(stegoFile);
+        // Open modal just to show the file itself
+        openPlayerModal(carrierURL, stegoFile.type, null, stegoFile.name, 'No Hidden Data Found', null, 0);
+    }
   }
 }

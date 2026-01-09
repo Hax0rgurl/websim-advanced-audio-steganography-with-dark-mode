@@ -74,11 +74,16 @@ export function genericExtract(bytes) {
         const filename = new TextDecoder().decode(bytes.subarray(p, p+nameLen)); p += nameLen;
         
         if (p + 4 > bytes.length) continue;
-        const dataLen = (bytes[p] << 24) | (bytes[p+1] << 16) | (bytes[p+2] << 8) | bytes[p+3]; p += 4;
+        // Use unsigned right shift to ensure we treat this as an unsigned 32-bit integer
+        const dataLen = ((bytes[p] << 24) | (bytes[p+1] << 16) | (bytes[p+2] << 8) | bytes[p+3]) >>> 0; 
+        p += 4;
         
         // Critical integrity check: The payload must end exactly at endPos (where SGE1 starts)
         if (p + dataLen === endPos) {
-          const payload = bytes.subarray(p, p + dataLen);
+          // Use slice() to create a deep copy of the payload. 
+          // This ensures the blob is not backed by the huge original buffer, preventing memory issues 
+          // and ensuring clean blob creation.
+          const payload = bytes.slice(p, p + dataLen);
           return { payload, mime, filename };
         }
       } catch (e) {
