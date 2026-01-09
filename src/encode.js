@@ -1,0 +1,239 @@
+import { state } from "state";
+import { renderOverlaysToContext } from "overlays";
+import { goToStep } from "wizard";
+import { buildHeader, embedBitsLSB, genericAppend, encodeWavLSB, PRNG_SEED, CHANNELS_USED, LSB_DEPTH, capacityBytesForDims } from "stego";
+import { drawScaledImageToCover } from "utils";
+import { Gallery } from "gallery";
+
+// Refs
+const audioInput = document.getElementById('audioInput'); // Now represents generic payload
+const btnStep4Next = document.getElementById('btnStep4Next');
+const capacityWrap = document.getElementById('capacityWrap');
+const capacityBar = document.getElementById('capacityBar');
+const capacityText = document.getElementById('capacityText');
+const scaleText = document.getElementById('scaleText');
+const finalStegoPreview = document.getElementById('finalStegoPreview');
+const downloadStegoBtn = document.getElementById('downloadStegoBtn');
+const openPublishBtn = document.getElementById('openPublishBtn');
+const statusElement = document.getElementById('status');
+
+// Publish Modal Refs
+const publishModal = document.getElementById('publishModal');
+const publishCloseBtn = document.getElementById('publishCloseBtn');
+const publishTitle = document.getElementById('publishTitle');
+const publishArtist = document.getElementById('publishArtist');
+const confirmPublishBtn = document.getElementById('confirmPublishBtn');
+
+function updateDropLabel(inputElement, file) {
+  const label = inputElement.closest('.drop-wrap')?.querySelector('.drop-main');
+  if (label && file) label.textContent = file.name;
+}
+
+export function initEncode(room, galleryInstance) {
+  audioInput.addEventListener('change', () => {
+    const file = audioInput.files[0];
+    if (file) {
+      state.currentPayloadFile = file; // Renamed state property
+      updateDropLabel(audioInput, file);
+      
+      // If we are in image mode, we need crop to be done.
+      // If generic mode, we can proceed immediately if carrier is set.
+      if (state.isImageCarrier) {
+        if (state.croppedImageBitmap) {
+           btnStep4Next.disabled = false;
+           updateCapacityUI();
+        }
+      } else {
+        if (state.currentCarrierFile) {
+          btnStep4Next.disabled = false;
+        }
+      }
+    }
+  });
+
+  document.getElementById('btnStep4Next').addEventListener('click', encodePayload);
+  
+  initPublishModal(galleryInstance);
+}
+
+function updateCapacityUI() {
+  // Only relevant for Image LSB mode
+  if (!state.isImageCarrier || !state.croppedImageBitmap || !state.currentPayloadFile) {
+    capacityWrap.style.display = 'none';
+    return;
+  }
+  
+  const width = state.croppedImageBitmap.width;
+  const height = state.croppedImageBitmap.height;
+  const origPixels = width * height;
+  const payloadSize = state.currentPayloadFile.size;
+  
+  const headerBytes = 512; 
+  const totalBytes = headerBytes + payloadSize;
+  
+  const bitsPerPixel = CHANNELS_USED * LSB_DEPTH;
+  const bytesPerPixel = bitsPerPixel / 8;
+  const pixelsNeeded = Math.ceil(totalBytes / bytesPerPixel);
+  
+  const scale = Math.sqrt((origPixels + pixelsNeeded) / Math.max(origPixels, 1));
+  const newW = Math.ceil(width * scale);
+  const newH = Math.ceil(height * scale);
+  const capacityBytes = capacityBytesForDims(newW, newH);
+  
+  capacityWrap.style.display = 'block';
+  capacityText.textContent = `Required Scale: ${scale.toFixed(2)}x`;
+  scaleText.textContent = `Output Size: ${newW}x${newH}`;
+  
+  const usedPct = Math.min(100, (totalBytes / capacityBytes) * 100);
+  capacityBar.style.width = usedPct.toFixed(1) + '%';
+}
+
+async function encodePayload() {
+  if (!state.currentPayloadFile) return;
+  if (!state.currentCarrierFile && !state.croppedImageBitmap) return;
+  
+  goToStep(5);
+  btnStep4Next.textContent = "Encoding...";
+  
+  try {
+    const payloadBuf = await state.currentPayloadFile.arrayBuffer();
+    const payloadBytes = new Uint8Array(payloadBuf);
+    const mime = state.currentPayloadFile.type || 'application/octet-stream';
+    const name = state.currentPayloadFile.name || 'file';
+
+    if (state.isImageCarrier) {
+      await encodeImageLSBFlow(payloadBytes, mime, name);
+    } else {
+      await encodeGenericFlow(payloadBytes, mime, name);
+    }
+  } catch(e) {
+    console.error(e);
+    statusElement.textContent = "Error encoding: " + e.message;
+  } finally {
+    btnStep4Next.textContent = "Encode Now";
+  }
+}
+
+async function encodeImageLSBFlow(payloadBytes, mime, name) {
+  // 1. Bake Overlays
+  const dim = state.croppedImageBitmap.width;
+  const bakeCanvas = document.createElement('canvas');
+  bakeCanvas.width = dim;
+  bakeCanvas.height = dim;
+  const ctx = bakeCanvas.getContext('2d');
+  
+  await renderOverlaysToContext(ctx, dim, dim);
+  
+  const bakedBlob = await new Promise(r => bakeCanvas.toBlob(r, 'image/png'));
+  const bakedBitmap = await createImageBitmap(bakedBlob);
+  
+  // 2. Prepare Payload with Header
+  const header = buildHeader(payloadBytes.length, mime, name);
+  const combined = new Uint8Array(header.length + payloadBytes.length);
+  combined.set(header, 0); combined.set(payloadBytes, header.length);
+  
+  // 3. Encode
+  const pixelsNeeded = Math.ceil(combined.length / (CHANNELS_USED * LSB_DEPTH / 8));
+  const origPixels = dim * dim;
+  const scale = Math.sqrt((origPixels + pixelsNeeded) / Math.max(origPixels, 1));
+  
+  const finalCanvas = document.createElement('canvas');
+  const { w, h } = drawScaledImageToCover(finalCanvas, bakedBitmap, scale);
+  const fCtx = finalCanvas.getContext('2d');
+  const imgData = fCtx.getImageData(0,0,w,h);
+  
+  embedBitsLSB(imgData, combined, PRNG_SEED);
+  fCtx.putImageData(imgData, 0,0);
+  
+  // 4. Result
+  finalCanvas.toBlob(blob => {
+    state.currentStegoBlob = blob;
+    const url = URL.createObjectURL(blob);
+    finalStegoPreview.src = url;
+    finalStegoPreview.style.display = 'block';
+    
+    setupDownloadBtn('stego_image.png', url);
+  }, 'image/png');
+}
+
+async function encodeGenericFlow(payloadBytes, mime, name) {
+  const carrierBuf = await state.currentCarrierFile.arrayBuffer();
+  const carrierBytes = new Uint8Array(carrierBuf);
+  
+  let resultBytes;
+  let ext = 'bin';
+  
+  // Attempt WAV LSB if WAV
+  if (state.currentCarrierFile.type === 'audio/wav' || state.currentCarrierFile.name.endsWith('.wav')) {
+    const res = encodeWavLSB(carrierBytes, payloadBytes, mime, name);
+    if (res) {
+      resultBytes = res;
+      ext = 'wav';
+    } else {
+      console.log('WAV encoding failed, falling back to append.');
+      resultBytes = genericAppend(carrierBytes, payloadBytes, mime, name);
+      ext = state.currentCarrierFile.name.split('.').pop();
+    }
+  } else {
+    // Generic Append
+    resultBytes = genericAppend(carrierBytes, payloadBytes, mime, name);
+    ext = state.currentCarrierFile.name.split('.').pop();
+  }
+  
+  const finalBlob = new Blob([resultBytes], { type: state.currentCarrierFile.type });
+  state.currentStegoBlob = finalBlob;
+  
+  // No image preview for generic files
+  finalStegoPreview.style.display = 'none';
+  finalStegoPreview.src = '';
+  
+  // But maybe show an icon?
+  // We'll leave it hidden for now.
+  
+  const url = URL.createObjectURL(finalBlob);
+  setupDownloadBtn(`stego_file.${ext}`, url);
+}
+
+function setupDownloadBtn(filename, url) {
+    downloadStegoBtn.onclick = () => {
+       const a = document.createElement('a');
+       a.href = url;
+       a.download = filename;
+       a.click();
+    };
+}
+
+function initPublishModal(gallery) {
+  function openPublish() {
+    if (!state.currentStegoBlob) return;
+    publishTitle.value = '';
+    publishArtist.value = '';
+    publishModal.classList.add('open');
+    publishModal.setAttribute('aria-hidden', 'false');
+  }
+  function closePublish() {
+    publishModal.classList.remove('open');
+    publishModal.setAttribute('aria-hidden', 'true');
+  }
+  
+  openPublishBtn.addEventListener('click', openPublish);
+  publishCloseBtn.addEventListener('click', closePublish);
+  
+  confirmPublishBtn.addEventListener('click', async () => {
+    if (!state.currentStegoBlob) return;
+    confirmPublishBtn.disabled = true;
+    confirmPublishBtn.textContent = 'Uploading...';
+    try {
+      await gallery.uploadPost(state.currentStegoBlob, publishTitle.value, publishArtist.value);
+      statusElement.textContent = 'Song published to Community Gallery!';
+      closePublish();
+      document.getElementById('tab-gallery').click();
+    } catch (e) {
+      console.error(e);
+      statusElement.textContent = 'Upload failed: ' + e.message;
+    } finally {
+      confirmPublishBtn.disabled = false;
+      confirmPublishBtn.textContent = 'Publish Now';
+    }
+  });
+}

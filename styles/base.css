@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Zen+Dots&family=Inter:wght@400;600;800&display=swap');
+
+/* Base: typography, body scaffold, transitions */
+body {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-items: start;
+  justify-items: center;
+  min-height: 100vh;
+  margin: 0;
+  background-color: var(--bg-color);
+  background-image: var(--bg-grad);
+  background-attachment: fixed;
+  background-size: cover;
+  padding: 32px 20px 24px;
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s, background-image 0.5s ease;
+}
+@media (max-width: 600px) {
+  body { padding: 16px 12px 24px; }
+}
+
+/* Headings and micro text nuances kept minimal (component-level files handle specifics) */

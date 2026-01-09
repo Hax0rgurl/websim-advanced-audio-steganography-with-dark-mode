@@ -1,0 +1,66 @@
+/* Small utilities and helpers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.hint { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+.preview-wrap { 
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 1000px) {
+  .preview-wrap { grid-template-columns: 1fr 1fr; }
+}
+.canvas-frame {
+  background: linear-gradient(180deg, rgba(148,163,184,0.08), transparent 50%);
+  border: 1px dashed color-mix(in oklab, var(--glass-border), var(--vw-pink) 28%);
+  border-radius: 14px;
+  padding: 10px;
+}
+
+/* Force all previews to be square frames */
+.canvas-frame, .player-image {
+  aspect-ratio: 1 / 1;
+}
+#preview, #stegoPreview, #step2Preview, #finalStegoPreview {
+  object-fit: contain;
+}
+
+/* --- Override: Fix encode previews to 400×400 regardless of image size (Responsive) --- */
+.canvas-frame {
+  width: 100% !important;
+  max-width: 400px !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+}
+#preview, #stegoPreview, #step2Preview, #finalStegoPreview {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  object-fit: contain;
+}
+
+/* Loading pulse animation text */
+.pulse {
+  animation: pulse-opacity 1.5s infinite ease-in-out;
+  color: var(--vw-cyan);
+  font-weight: 600;
+}
+@keyframes pulse-opacity {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}

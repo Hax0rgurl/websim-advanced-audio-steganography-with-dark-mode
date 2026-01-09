@@ -1,0 +1,417 @@
+<html>
+  <head>
+    <base href="https://webcreationengine.com/">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Audio Steganography with Dark Mode</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="./styles.css">
+    <script type="importmap">
+    {
+      "imports": {
+        "utils": "./src/utils.js",
+        "stego": "./src/stego.js",
+        "state": "./src/state.js",
+        "theme": "./src/theme.js",
+        "player": "./src/player.js",
+        "overlays": "./src/overlays.js",
+        "crop": "./src/crop.js",
+        "encode": "./src/encode.js",
+        "decode": "./src/decode.js",
+        "wizard": "./src/wizard.js",
+        "gallery": "./src/gallery.js",
+        "main": "./src/main.js",
+        "cropperjs": "https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js",
+        "qrcode": "https://esm.sh/qrcode@1.5.3"
+      }
+    }
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+  </head>
+  <body class="dark-mode">
+    <div class="vw-grid"></div>
+    <div class="vw-sun"></div>
+    <div class="vw-scan"></div>
+    <div class="vw-noise"></div>
+    <div class="app-header">
+      <div class="brand">
+        <div class="brand-badge">AS</div>
+        <div>
+          <h1>Advanced Audio Steganography</h1>
+          <div class="subtitle">Hide audio as subtle image grain and decode with a built-in player</div>
+        </div>
+      </div>
+      <button id="darkModeToggle" title="Toggle dark mode">Toggle Dark Mode</button>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Encode/Decode tabs">
+      <button class="tab" role="tab" id="tab-home" aria-controls="panel-home" aria-selected="true">How it Works</button>
+      <button class="tab" role="tab" id="tab-encode" aria-controls="panel-encode" aria-selected="false">Encode</button>
+      <button class="tab" role="tab" id="tab-decode" aria-controls="panel-decode" aria-selected="false">Decode</button>
+      <button class="tab" role="tab" id="tab-gallery" aria-controls="panel-gallery" aria-selected="false">Community Gallery</button>
+    </div>
+
+    <div class="container">
+      <div class="tab-panels">
+        <div id="panel-home" class="tab-panel active" role="tabpanel" aria-labelledby="tab-home">
+          <div class="hero-layout">
+            <div class="hero-header">
+              <div class="hero-badge">V2.0</div>
+              <h2>Hide Your Audio in Plain Sight</h2>
+              <p class="hero-text">
+                Turn any image into a playable audio container using advanced steganography.
+                Share music, voice notes, or secret messages encoded directly into pixel data.
+              </p>
+            </div>
+
+            <div class="steps-grid">
+              <div class="step-card">
+                <div class="step-icon">
+                  <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                </div>
+                <h3>1. Encode</h3>
+                <p>Select a song and a cover photo. We weave the sound into the image pixels seamlessly.</p>
+              </div>
+              <div class="step-card">
+                <div class="step-icon">
+                   <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
+                </div>
+                <h3>2. Customize</h3>
+                <p>Add overlays, QR codes, or neon text to your image before finalizing.</p>
+              </div>
+              <div class="step-card">
+                <div class="step-icon">
+                  <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h3>3. Share</h3>
+                <p>The resulting PNG plays in our gallery or anywhere this tool is used.</p>
+              </div>
+            </div>
+
+            <div class="hero-actions">
+              <button id="goEncodeBtn" class="big-btn">Create Your First Song Image</button>
+              <button id="goGalleryBtn" class="big-btn secondary">Explore Community Gallery</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-encode" class="tab-panel" role="tabpanel" aria-labelledby="tab-encode">
+          <div class="section-title">
+            <span>Encode Workflow</span>
+            <span class="pill">New v2.1</span>
+          </div>
+
+          <!-- Wizard Progress -->
+          <div class="wizard-progress">
+            <div class="step-dot active" id="dot1">1</div>
+            <div class="step-dot" id="dot2">2</div>
+            <div class="step-dot" id="dot3">3</div>
+            <div class="step-dot" id="dot4">4</div>
+            <div class="step-dot" id="dot5">5</div>
+          </div>
+
+          <!-- Step 1: Upload Carrier -->
+          <div id="wiz-step-1" class="wizard-step active-step">
+            <div class="card">
+              <div class="label">1. Select Carrier File</div>
+              <label class="drop-wrap" for="imageInput">
+                <div class="drop-icon">
+                   <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                </div>
+                <div class="drop-main">Click to select Carrier</div>
+                <div class="drop-hint">Images, Audio, or any other file type</div>
+                <!-- We remove accept attribute to allow all files -->
+                <input type="file" id="imageInput" class="sr-only">
+              </label>
+            </div>
+            <div class="wizard-nav" style="justify-content: flex-end;">
+              <button id="btnStep1Next" type="button" disabled>Next</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Crop -->
+          <div id="wiz-step-2" class="wizard-step">
+            <div class="label">2. Crop Image</div>
+            <div class="hint" style="margin-bottom: 12px; font-size: 15px;">Does this image need to be cropped?</div>
+            
+            <div class="card" id="cropAreaCard" style="display:none; margin-bottom: 16px;">
+              <div style="height: 400px; background: #000; border-radius: 8px; overflow: hidden;">
+                <img id="cropImageTarget" style="max-width: 100%; display:block;">
+              </div>
+              <div class="inline-controls" style="margin-top: 10px;">
+                <button id="cropZoomInBtn" class="secondary">Zoom +</button>
+                <button id="cropZoomOutBtn" class="secondary">Zoom -</button>
+                <button id="cropConfirmBtn" style="margin-left:auto;">Apply Crop</button>
+              </div>
+            </div>
+
+            <div class="card" id="previewAreaCard">
+              <div class="canvas-frame">
+                 <img id="step2Preview" style="max-width: 100%; max-height: 400px; object-fit:contain;">
+              </div>
+              <div id="imageInfo" class="hint"></div>
+            </div>
+
+            <div class="wizard-nav">
+              <button id="btnStep2Back" class="secondary" type="button">Back</button>
+              <div class="inline">
+                 <button id="btnEnableCrop" class="secondary" type="button">Yes, Crop It</button>
+                 <button id="btnStep2Next" type="button">Next: Overlays</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Overlays -->
+          <div id="wiz-step-3" class="wizard-step">
+            <div class="label">3. Branding & Overlays</div>
+            <div class="player-layout">
+               <div class="card">
+                  <div class="canvas-frame">
+                    <canvas id="overlayCanvas" style="width:100%; height:auto; aspect-ratio:1/1;"></canvas>
+                  </div>
+                  <div class="hint">Live preview (Scaled)</div>
+               </div>
+               
+               <div class="card">
+                  <!-- TABS FOR OVERLAYS -->
+                  <div class="tabs" style="margin-bottom: 12px;">
+                    <button class="tab" id="subtab-qr" aria-selected="true">QR Code</button>
+                    <button class="tab" id="subtab-text" aria-selected="false">Text</button>
+                  </div>
+
+                  <!-- QR Panel -->
+                  <div id="panel-qr">
+                    <div class="inline-controls">
+                      <label class="inline"><input type="checkbox" id="qrEnableChk" checked> Enable QR</label>
+                      <select id="qrCornerSel"><option value="top-left">Top Left</option><option value="top-right" selected>Top Right</option><option value="bottom-right">Bottom Right</option><option value="bottom-left">Bottom Left</option></select>
+                    </div>
+                    <input type="url" id="qrUrlInput" placeholder="https://..." value="https://hideaudio.on.websim.com/" style="width:100%; padding:8px; margin:8px 0; border-radius:8px; border:1px solid var(--border); background:var(--glass-bg); color:var(--text-color);">
+                    <div class="hint">Link to your song or profile</div>
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; margin-top:8px;">
+                      <label>Size <input type="range" id="qrSizeRange" min="5" max="40" value="15"></label>
+                      <label>Margin <input type="range" id="qrMarginRange" min="0" max="100" value="20"></label>
+                      <label>Opacity <input type="range" id="qrOpacityRange" min="20" max="100" value="100"></label>
+                    </div>
+                  </div>
+
+                  <!-- Text Panel -->
+                  <div id="panel-text" style="display:none;">
+                    <div class="inline-controls">
+                      <label class="inline"><input type="checkbox" id="textEnableChk"> Enable Text</label>
+                      <select id="textPositionSel"><option value="bottom-left" selected>Bottom Left</option><option value="bottom-right">Bottom Right</option><option value="top-left">Top Left</option><option value="top-right">Top Right</option><option value="center">Center</option></select>
+                    </div>
+                    <textarea id="textContentInput" rows="4" placeholder="Type here..." style="width:100%; padding:8px; margin:8px 0; border-radius:8px; border:1px solid var(--border); background:var(--glass-bg); color:var(--text-color); font-family:inherit;"></textarea>
+                    
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap:8px;">
+                       <select id="fontFamilySel">
+                          <option value="" selected>Default Font</option>
+                          <option value="Monoton">Monoton</option>
+                          <option value="Bungee Shade">Bungee Shade</option>
+                          <option value="Press Start 2P">Press Start 2P</option>
+                          <option value="Orbitron">Orbitron</option>
+                          <option value="Audiowide">Audiowide</option>
+                          <option value="Bangers">Bangers</option>
+                          <option value="Gloria Hallelujah">Gloria Hallelujah</option>
+                       </select>
+                       <input type="color" id="fontColorInput" value="#ffffff" style="width:100%; height:38px; padding:2px;">
+                    </div>
+                    
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; margin-top:8px;">
+                       <label>Size <input type="range" id="fontSizeRange" min="10" max="100" value="40"></label>
+                       <label>Line Height <input type="range" id="lineHeightRange" min="100" max="200" value="120"></label>
+                       <label>Margin <input type="range" id="textMarginRange" min="0" max="150" value="30"></label>
+                       <label class="inline" style="justify-self:start; margin-top:6px;"><input type="checkbox" id="neonGlowChk" checked> Neon Glow</label>
+                    </div>
+                  </div>
+
+               </div>
+            </div>
+
+            <div class="wizard-nav">
+              <button id="btnStep3Back" class="secondary" type="button">Back</button>
+              <button id="btnStep3Next" type="button">Next: Add Music</button>
+            </div>
+          </div>
+
+          <!-- Step 4: Payload -->
+          <div id="wiz-step-4" class="wizard-step">
+            <div class="label">4. Select Payload</div>
+            <div class="card">
+              <label class="drop-wrap" for="audioInput">
+                <div class="drop-icon">
+                  <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                </div>
+                <div class="drop-main">Click to select Payload File</div>
+                <div class="drop-hint">Any file type (Audio, Text, etc.)</div>
+                <input type="file" id="audioInput" class="sr-only">
+              </label>
+              <div id="audioInfo" class="hint"></div>
+              
+              <div id="capacityWrap" class="hint" style="display:none; margin-top:16px;">
+                Capacity Check:
+                <div class="bar"><span id="capacityBar"></span></div>
+                <div class="inline">
+                  <span id="capacityText" class="pill"></span>
+                  <span id="scaleText" class="pill"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="wizard-nav">
+              <button id="btnStep4Back" class="secondary" type="button">Back</button>
+              <button id="btnStep4Next" type="button" disabled>Encode Now</button>
+            </div>
+          </div>
+
+          <!-- Step 5: Finish -->
+          <div id="wiz-step-5" class="wizard-step">
+            <div class="hero-layout" style="padding:10px 0;">
+               <div style="font-size:48px; color:var(--vw-cyan);">✓</div>
+               <h2>Encoded Successfully</h2>
+               <p class="hero-text">Your audio is now hidden inside this image.</p>
+               
+               <div class="card" style="margin: 0 auto; max-width: 400px;">
+                  <div class="canvas-frame">
+                    <img id="finalStegoPreview" style="width:100%; height:auto;">
+                  </div>
+               </div>
+
+               <div class="hero-actions">
+                 <button id="downloadStegoBtn" class="big-btn">Download Image</button>
+                 <button id="openPublishBtn" class="big-btn" style="background-image: linear-gradient(180deg, #10b981, #059669);">Publish to Gallery</button>
+               </div>
+               
+               <div style="margin-top:20px;">
+                 <button id="btnRestart" class="secondary">Start New</button>
+               </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div id="panel-decode" class="tab-panel" role="tabpanel" aria-labelledby="tab-decode">
+          <div class="section-title">
+            <span>Decode</span>
+            <span class="pill">Auto-detects format</span>
+          </div>
+
+          <div class="row">
+            <div class="card">
+              <div class="label">Stego File (to decode)</div>
+              <label class="drop-wrap" for="stegoInput">
+                <div class="drop-icon">
+                  <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                </div>
+                <div class="drop-main">Select Stego File</div>
+                <div class="drop-hint">Upload any file containing hidden data</div>
+                <input type="file" id="stegoInput" class="sr-only">
+              </label>
+            </div>
+            <div class="card">
+              <div class="label">Actions</div>
+              <div class="inline" style="margin-top:6px;">
+                <button id="decodeBtn" type="button">
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Decode & Play
+                </button>
+                <!-- Audio download hidden -->
+                <a id="downloadDecodedBtn" class="download" style="display:none;">
+                  <button class="secondary" type="button" style="display:none;">Download Decoded Audio</button>
+                </a>
+              </div>
+              <div class="hint">Tip: Decoding opens a modal player and enables download.</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-gallery" class="tab-panel" role="tabpanel" aria-labelledby="tab-gallery">
+          <div class="section-title">
+            <span>Community Gallery</span>
+            <span class="pill">Discover hidden songs</span>
+          </div>
+          <div class="hint" style="margin-bottom: 12px;">
+            Explore songs hidden in images by others. Click any image to decode and play its secret audio.
+            To post your own, create an image in the <b>Encode</b> tab first.
+          </div>
+          <div id="galleryGrid" class="gallery-grid">
+            <div class="gallery-loader">Loading gallery...</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="status">Ready.</div>
+
+      <audio id="audioPlayer" controls style="display:none; margin-top: 20px;"></audio>
+
+      <div class="modal" id="playerModal" aria-hidden="true" role="dialog" aria-label="Audio player">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div class="modal-title" id="playerModalTitle">Embedded Audio Player</div>
+            <button class="modal-close" id="modalCloseBtn" type="button">Close</button>
+          </div>
+          <div class="modal-body">
+            <div class="player-layout">
+              <img id="modalImage" class="player-image" alt="Stego image preview">
+              <div class="player-panel">
+                <audio id="modalAudio" controls preload="metadata" style="width:100%;"></audio>
+                <div class="inline-controls">
+                  <button id="modalPlayBtn" type="button">Play</button>
+                  <button id="modalPauseBtn" type="button" class="secondary">Pause</button>
+                  <label class="inline">
+                    <input type="checkbox" id="modalLoopChk">
+                    Loop
+                  </label>
+                  <!-- Audio download hidden -->
+                  <a id="modalDownloadLink" class="download" style="display:none;">
+                    <button type="button" class="secondary">Download Audio</button>
+                  </a>
+                </div>
+                <div id="modalMeta" class="hint"></div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            Tip: This plays the audio directly from what was embedded in the image (as a layer). You can close this window and continue.
+          </div>
+        </div>
+      </div>
+
+      <!-- Crop Modal Removed (integrated into wizard) -->
+
+      <!-- Publish Modal -->
+      <div class="modal" id="publishModal" aria-hidden="true" role="dialog" aria-label="Publish to Gallery">
+        <div class="modal-content" style="max-width: 500px;">
+          <div class="modal-header">
+            <div class="modal-title">Post to Gallery</div>
+            <button class="modal-close" id="publishCloseBtn" type="button">Close</button>
+          </div>
+          <div class="modal-body">
+            <div class="player-layout">
+              <div class="player-panel">
+                <div class="label">Song Details</div>
+                <input type="text" id="publishTitle" placeholder="Song Title (e.g. Neon Nights)" style="width:100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--glass-bg); color: var(--text-color);">
+                <input type="text" id="publishArtist" placeholder="Artist Name (Optional)" style="width:100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--glass-bg); color: var(--text-color);">
+                <div class="hint">Your stego image will be uploaded to the public gallery. Anyone can play it.</div>
+                
+                <div class="inline-controls" style="margin-top: 16px; justify-content: flex-end;">
+                  <button id="confirmPublishBtn" type="button">Publish Now</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlay Modal Removed (integrated into wizard) -->
+    </div>
+
+    <div class="app-footer">
+      Built for seamless, subtle audio-in-image workflows. Your selections stay local in the browser.
+    </div>
+
+    <script type="module">
+      import "main";
+    </script>
+
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
