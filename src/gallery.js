@@ -53,6 +53,7 @@ export class Gallery {
     if (mime.startsWith('audio/')) return 'Audio';
     if (mime.startsWith('video/')) return 'Video';
     if (mime.startsWith('text/')) return 'Text';
+    if (mime === 'application/pdf') return 'PDF';
     return 'File';
   }
 
@@ -146,6 +147,10 @@ export class Gallery {
         badgeHtml = `<div class="gallery-type-badge">🎵 Audio</div>`;
       } else if (payloadType.startsWith('text/')) {
         badgeHtml = `<div class="gallery-type-badge">📝 Text</div>`;
+      } else if (payloadType.startsWith('image/')) {
+        badgeHtml = `<div class="gallery-type-badge">🖼️ Image</div>`;
+      } else if (payloadType === 'application/pdf') {
+        badgeHtml = `<div class="gallery-type-badge">📄 PDF</div>`;
       } else if (payloadType && !payloadType.startsWith('application/octet-stream')) {
         badgeHtml = `<div class="gallery-type-badge">📁 File</div>`;
       }
