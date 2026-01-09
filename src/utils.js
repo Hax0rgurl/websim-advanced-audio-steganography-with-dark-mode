@@ -54,6 +54,7 @@ export function getMimeFromName(name){
     case 'm4v': return 'video/mp4';
     case '3gp': return 'video/3gpp';
     case 'ts': return 'video/mp2t';
+    case 'ogv': return 'video/ogg';
     default: return 'application/octet-stream';
   }
 }

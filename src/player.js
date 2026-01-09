@@ -122,16 +122,23 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     
     // MEDIA_ERR_NETWORK(2), MEDIA_ERR_DECODE(3), MEDIA_ERR_SRC_NOT_SUPPORTED(4)
     if (err.code >= 2) {
-        el.onerror = null; // Remove handler to prevent loop
-        el.removeAttribute('src'); // Detach source immediately
+        // Log detailed error for debugging but don't panic
+        console.warn("Media Error Details:", err.message, "Code:", err.code);
         
-        // Don't call resetMediaDisplay() here as it triggers .load() which might loop errors
-        el.style.display = 'none';
+        el.onerror = null; 
         
-        // Show fallback
-        modalMeta.innerHTML = `<span style="color:var(--vw-pink)">Playback failed (Codec/Format not supported).<br>Please download to play.</span>`;
+        // Don't hide the player immediately, it might just need a user click or it's partial.
+        // But if it's decode error, it's likely fatal for playback.
+        
+        // Show fallback UI nicely
+        modalMeta.innerHTML = `
+            <div style="background:rgba(255,0,0,0.1); padding:8px; border-radius:8px; margin-top:8px;">
+                <div style="color:var(--vw-pink); font-weight:bold;">Playback Error</div>
+                <div style="font-size:12px; opacity:0.8;">Browser cannot play this file directly.</div>
+            </div>`;
+            
         modalDownloadLink.style.display = 'inline-block';
-        modalDownloadLink.href = url || '#';
+        modalDownloadBtn.classList.remove('secondary'); // Highlight download button
     }
   };
 
@@ -147,20 +154,27 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     modalAudio.onerror = onError;
     activeMediaElement = modalAudio;
     showPlaybackControls();
+    // Try to play but handle failure gracefully
     const p = modalAudio.play();
-    if (p) p.catch(e => { if (e.name !== 'AbortError') console.warn("Audio autoplay blocked", e); });
+    if (p) p.catch(e => console.log("Audio autoplay prevented (user interaction needed)", e));
   } 
   else if (isVideo) {
     typeLabel = 'Video';
     modalVideo.style.display = 'block';
     modalVideo.style.minHeight = '240px'; 
     modalVideo.src = url;
-    modalVideo.load(); 
     modalVideo.onerror = onError;
     activeMediaElement = modalVideo;
     showPlaybackControls();
-    const p = modalVideo.play();
-    if (p) p.catch(e => { if (e.name !== 'AbortError') console.warn("Video autoplay blocked", e); });
+    
+    // Force load to ensure codec check happens immediately
+    try {
+        modalVideo.load();
+        const p = modalVideo.play();
+        if (p) p.catch(e => console.log("Video autoplay prevented (user interaction needed)", e));
+    } catch(e) {
+        console.warn("Video load error", e);
+    }
   } 
   else if (mime.startsWith('image/')) {
     typeLabel = 'Image';
