@@ -121,9 +121,6 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
         modalDownloadLink.href = url || '#';
     }
   };
-    modalDownloadLink.download = `extracted_${Date.now()}.bin`;
-    modalDownloadBtn.textContent = 'Download File';
-  };
 
   // Attempt to play media if mime type matches, trusting the browser's native capabilities
   // rather than strict pre-checks which often fail for valid containers (e.g. mkv, mov).
