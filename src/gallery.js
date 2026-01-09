@@ -52,7 +52,7 @@ export class Gallery {
       if (mime.startsWith('image/')) {
         previewHtml = `<img src="${fileUrl}" class="gallery-img" loading="lazy" alt="${post.title || 'Stego Media'}">`;
       } else if (mime.startsWith('video/')) {
-        previewHtml = `<video src="${fileUrl}" class="gallery-img" muted loop playsinline onmouseover="this.play()" onmouseout="this.pause()" style="object-fit:cover;"></video>
+        previewHtml = `<video src="${fileUrl}" class="gallery-img" muted loop playsinline style="object-fit:cover;"></video>
         <div class="gallery-play-icon" style="pointer-events:none;"></div>`;
       } else if (mime.startsWith('audio/')) {
         previewHtml = `<div class="gallery-generic-preview audio">
@@ -86,6 +86,21 @@ export class Gallery {
           </div>
         </div>
       `;
+      
+      const vid = card.querySelector('video');
+      if (vid) {
+        card.addEventListener('mouseenter', () => {
+          const p = vid.play();
+          if (p && typeof p.catch === 'function') {
+            p.catch(() => {}); // Ignore interactions that interrupt play
+          }
+        });
+        card.addEventListener('mouseleave', () => {
+          vid.pause();
+          try { vid.currentTime = 0; } catch(e){}
+        });
+      }
+
       card.onclick = () => this.onPlay(post);
       this.grid.appendChild(card);
     });
