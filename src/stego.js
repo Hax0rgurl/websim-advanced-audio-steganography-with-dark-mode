@@ -53,29 +53,41 @@ export function genericExtract(bytes) {
   if (endPos < 0) return null;
 
   // Scan backwards from endPos for SGEN1
-  let magicPos = -1;
   const magicLen = MAGIC_GEN.length;
-  // Limit scan distance
-  for (let i = endPos - 1; i >= Math.max(0, endPos - 1024*1024*50); i--) {
-    if (matchBytes(bytes, i, MAGIC_GEN)) { magicPos = i; break; }
+  // Limit scan distance to 200MB or start of file
+  const startScan = Math.max(0, endPos - 1024*1024*200);
+  
+  // Robust loop: continue searching if a candidate header doesn't validate against endPos
+  for (let i = endPos - 1; i >= startScan; i--) {
+    if (matchBytes(bytes, i, MAGIC_GEN)) {
+      try {
+        let p = i + magicLen;
+        if (p + 2 > bytes.length) continue;
+        
+        const mimeLen = (bytes[p] << 8) | bytes[p+1]; p += 2;
+        if (p + mimeLen > bytes.length) continue;
+        const mime = new TextDecoder().decode(bytes.subarray(p, p+mimeLen)); p += mimeLen;
+        
+        if (p + 2 > bytes.length) continue;
+        const nameLen = (bytes[p] << 8) | bytes[p+1]; p += 2;
+        if (p + nameLen > bytes.length) continue;
+        const filename = new TextDecoder().decode(bytes.subarray(p, p+nameLen)); p += nameLen;
+        
+        if (p + 4 > bytes.length) continue;
+        const dataLen = (bytes[p] << 24) | (bytes[p+1] << 16) | (bytes[p+2] << 8) | bytes[p+3]; p += 4;
+        
+        // Critical integrity check: The payload must end exactly at endPos (where SGE1 starts)
+        if (p + dataLen === endPos) {
+          const payload = bytes.subarray(p, p + dataLen);
+          return { payload, mime, filename };
+        }
+      } catch (e) {
+        // malformed header candidate, continue search
+      }
+    }
   }
-  if (magicPos < 0) return null;
   
-  let p = magicPos + magicLen;
-  const mimeLen = (bytes[p] << 8) | bytes[p+1]; p += 2;
-  const mime = new TextDecoder().decode(bytes.subarray(p, p+mimeLen)); p += mimeLen;
-  
-  const nameLen = (bytes[p] << 8) | bytes[p+1]; p += 2;
-  const filename = new TextDecoder().decode(bytes.subarray(p, p+nameLen)); p += nameLen;
-  
-  const dataLen = (bytes[p] << 24) | (bytes[p+1] << 16) | (bytes[p+2] << 8) | bytes[p+3]; p += 4;
-  
-  const payload = bytes.subarray(p, p + dataLen);
-  
-  // Verify integrity
-  if (p + dataLen !== endPos) return null; // Structure mismatch
-  
-  return { payload, mime, filename };
+  return null;
 }
 
 function matchBytes(buf, pos, pattern) {

@@ -115,19 +115,21 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     if (!el.getAttribute('src')) return;
 
     const err = el.error;
-    if (!err) return;
+    // Suppress console spam if it's just an aborted load
+    if (!err || err.code === 1) return; // MEDIA_ERR_ABORTED
 
-    console.warn("Media playback warning/error:", err);
+    console.warn("Media playback warning/error:", err.code, err.message);
     
-    // We don't hide the player immediately to avoid UI flashing if it's a minor hiccup,
-    // but if it's a true error state (code 4), we show the fallback message.
-    if (err.code >= 3) { // MEDIA_ERR_DECODE or MEDIA_ERR_SRC_NOT_SUPPORTED
-        // Prevent infinite recursion by removing the error handler
-        el.onerror = null;
+    // MEDIA_ERR_NETWORK(2), MEDIA_ERR_DECODE(3), MEDIA_ERR_SRC_NOT_SUPPORTED(4)
+    if (err.code >= 2) {
+        el.onerror = null; // Remove handler to prevent loop
+        el.removeAttribute('src'); // Detach source immediately
         
-        resetMediaDisplay(); 
+        // Don't call resetMediaDisplay() here as it triggers .load() which might loop errors
+        el.style.display = 'none';
         
-        modalMeta.innerHTML = `<span style="color:var(--vw-pink)">Playback failed (Codec/Format not supported by browser). <br>Please download to play.</span>`;
+        // Show fallback
+        modalMeta.innerHTML = `<span style="color:var(--vw-pink)">Playback failed (Codec/Format not supported).<br>Please download to play.</span>`;
         modalDownloadLink.style.display = 'inline-block';
         modalDownloadLink.href = url || '#';
     }
@@ -227,8 +229,10 @@ function resetMediaDisplay() {
   modalVideo.onerror = null;
   modalAudio.removeAttribute('src');
   modalVideo.removeAttribute('src');
-  modalAudio.load();
-  modalVideo.load();
+  
+  // Only call load() if we really need to reset internal buffer, 
+  // but it can cause errors if src is missing. 
+  // Just removing src is usually sufficient for display:none elements.
 }
 
 function showPlaybackControls() {
