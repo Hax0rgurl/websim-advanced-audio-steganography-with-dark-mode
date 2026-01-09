@@ -84,6 +84,7 @@ async function tryDecodeImageLSB(blob) {
   canvas.height = image.height;
   
   // Ensure strict pixel reading without alpha composition interference
+  ctx.imageSmoothingEnabled = false;
   ctx.globalCompositeOperation = 'copy';
   ctx.drawImage(image, 0, 0);
 

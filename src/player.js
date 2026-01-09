@@ -131,13 +131,23 @@ export function updatePlayerModalContent(url, mimeType, sizeBytes) {
     
     // MEDIA_ERR_NETWORK(2), MEDIA_ERR_DECODE(3), MEDIA_ERR_SRC_NOT_SUPPORTED(4)
     if (err.code >= 2) {
-        // We don't hide the element immediately, as some browsers might recover or it might be a partial error
-        // But we do show the error message.
+        // Hide the broken player element to avoid ugly broken icon
+        el.style.display = 'none';
         
-        // Show fallback message, but keep player visible-ish (maybe transparent) just in case
-        modalMeta.innerHTML = `<span style="color:var(--vw-pink)">Playback error (${err.code}): Codec/Format may not be supported.<br>Try downloading the file to play locally.</span>`;
+        // Show a friendly error card in place of metadata
+        modalMeta.innerHTML = `
+          <div style="padding: 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; text-align: center; margin-top: 12px;">
+            <div style="font-weight: 700; color: #fca5a5; margin-bottom: 4px;">Playback Failed</div>
+            <div style="font-size: 13px; color: #e2e8f0; margin-bottom: 12px;">The browser cannot decode this media file (Error ${err.code}). It might use an unsupported codec or be corrupted.</div>
+            <button onclick="document.getElementById('modalDownloadBtn').click()" class="secondary" style="background: rgba(255,255,255,0.1); width: auto; font-size: 13px; padding: 8px 16px;">
+              Download to Play Locally
+            </button>
+          </div>
+        `;
         modalDownloadLink.style.display = 'inline-block';
         modalDownloadLink.href = url || '#';
+        // Ensure the main download button is visible
+        modalDownloadBtn.style.display = 'inline-flex';
     }
   };
 

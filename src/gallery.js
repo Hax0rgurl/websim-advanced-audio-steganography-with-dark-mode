@@ -80,7 +80,7 @@ export class Gallery {
           <div class="gallery-info">
             <div class="gallery-title">${post.title || 'Untitled'}</div>
             <div class="gallery-artist">
-              ${avatar ? `<img src="${avatar}" class="gallery-avatar" alt="">` : ''}
+              ${avatar ? `<img src="${avatar}" class="gallery-avatar" alt="" onerror="this.style.display='none'">` : ''}
               ${post.artist || post.username || 'Anonymous'}
             </div>
           </div>
